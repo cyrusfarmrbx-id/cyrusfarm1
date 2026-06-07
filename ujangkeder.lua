@@ -479,7 +479,7 @@ WH_Top.ClipsDescendants = true
 local WH_Title = Instance.new("TextLabel", WH_Top)
 WH_Title.Size = UDim2.new(1,-100,1,0)
 WH_Title.Position = UDim2.new(0,6,0,0)
-WH_Title.Text = "CYRUS FARM"
+WH_Title.Text = "CYRUS FARM [UNIVERSAL]"
 WH_Title.TextColor3 = Color3.fromRGB(255,255,255)
 WH_Title.BackgroundTransparency = 1
 WH_Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -769,7 +769,9 @@ task.spawn(function()
             
             if type(id) == "number" and type(metadata) == "table" then
                 if metadata.Weight and type(metadata.Weight) == "number" then
+                    -- FIX STUCK DETECTOR: Reset waktu saat dapat ikan (APAPUN IKANNYA)
                     LastCatchTime = tick()
+                    
                     local fishId = id
                     local isShiny = metadata.Shiny == true
                     local mutationName = metadata.VariantId
