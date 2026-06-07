@@ -33,7 +33,6 @@ local locked = false
 
 local blurEffect = Lighting:FindFirstChild("FarmBlur")
 if blurEffect then blurEffect:Destroy() end
-
 blurEffect = Instance.new("BlurEffect")
 blurEffect.Name = "FarmBlur"
 blurEffect.Size = 56
@@ -66,70 +65,31 @@ local dlConn = nil
 local camConn = nil
 
 ------------------------------------------------
--- CLEAR TEXT & PETIR (NOL DELAY - DARI SCRIPT YANG WORK)
+-- CLEAR TEXT & PETIR (NOL DELAY)
 ------------------------------------------------
 local function clearTextAndLightning(obj)
-    -- 1. Clear Text
-    if obj.Name == "TextEffectAttachment" then
-        obj:Destroy()
-        return
-    end
-
-    -- 2. Petir (Berdasarkan script yang kamu kirim, langsung Destroy sebelum animasi mulai)
+    if obj.Name == "TextEffectAttachment" then obj:Destroy(); return end
     local name = obj.Name:lower()
-    if name == "boltpart"
-    or name == "lightningbolt"
-    or string.find(name, "lightning")
-    or string.find(name, "bolt") then
-
-        if obj:IsA("ParticleEmitter")
-        or obj:IsA("Trail")
-        or obj:IsA("Beam") then
-            obj.Enabled = false
-        end
-
-        if obj:IsA("BasePart")
-        or obj:IsA("MeshPart") then
-            obj.Transparency = 1
-            obj.CastShadow = false
-        end
-
-        task.spawn(function()
-            pcall(function()
-                obj:Destroy()
-            end)
-        end)
+    if name == "boltpart" or name == "lightningbolt" or string.find(name, "lightning") or string.find(name, "bolt") then
+        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then obj.Enabled = false end
+        if obj:IsA("BasePart") or obj:IsA("MeshPart") then obj.Transparency = 1; obj.CastShadow = false end
+        task.spawn(function() pcall(function() obj:Destroy() end) end)
     end
 end
 
 ------------------------------------------------
--- CLEAR IKAN (KHUSUS COSMETIC FOLDER - AMAN PULAU)
+-- CLEAR IKAN (KHUSUS COSMETIC FOLDER)
 ------------------------------------------------
 local function clearFish(obj)
     if obj:IsA("Model") then
         local lowerName = obj.Name:lower()
-        local isTarget = obj:FindFirstChild("Handle") 
-                      or string.find(lowerName, "fish")
-                      or string.find(lowerName, "shark")
-                      or string.find(lowerName, "beast")
-                      or string.find(lowerName, "whale")
-                      or string.find(lowerName, "leviathan")
-                      or string.find(lowerName, "effect")
-                      or string.find(lowerName, "vfx")
-
+        local isTarget = obj:FindFirstChild("Handle") or string.find(lowerName, "fish") or string.find(lowerName, "shark")
         if isTarget then
             for _, v in pairs(obj:GetDescendants()) do
-                if v:IsA("BasePart") or v:IsA("MeshPart") then 
-                    v.Transparency = 1 
-                    v.CanCollide = false
-                end
-                if v:IsA("Decal") or v:IsA("Texture") then v.Transparency = 1 end
-                if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") then v.Enabled = false end
+                if v:IsA("BasePart") or v:IsA("MeshPart") then v.Transparency = 1; v.CanCollide = false end
+                if v:IsA("ParticleEmitter") or v:IsA("Trail") then v.Enabled = false end
             end
-            -- Delay destroy 1 detik agar aman dari error induknya
-            task.delay(1, function()
-                pcall(function() obj:Destroy() end)
-            end)
+            task.delay(1, function() pcall(function() obj:Destroy() end) end)
         end
     end
 end
@@ -212,27 +172,12 @@ local function EnableFarmMode()
     kunciUI(LocalPlayer.PlayerGui)
     toggleFPP(true)
     
-    -- SCAN AWAL PETIR & TEXT (GLOBAL)
-    for _, v in pairs(workspace:GetDescendants()) do
-        clearTextAndLightning(v)
-    end
-    
-    -- SCAN AWAL IKAN (KHUSUS COSMETIC FOLDER)
+    for _, v in pairs(workspace:GetDescendants()) do clearTextAndLightning(v) end
     local cf = workspace:FindFirstChild("CosmeticFolder")
-    if cf then
-        for _, v in pairs(cf:GetDescendants()) do
-            clearFish(v)
-        end
-    end
+    if cf then for _, v in pairs(cf:GetDescendants()) do clearFish(v) end end
 
-    -- LISTENER REALTIME PETIR & TEXT (GLOBAL)
     notifConn = workspace.DescendantAdded:Connect(clearTextAndLightning)
-    
-    -- LISTENER REALTIME IKAN (KHUSUS COSMETIC FOLDER)
-    if cf then
-        fishConn = cf.DescendantAdded:Connect(clearFish)
-    end
-
+    if cf then fishConn = cf.DescendantAdded:Connect(clearFish) end
     print("Farm Mode Enabled")
 end
 
@@ -241,10 +186,8 @@ local function DisableFarmMode()
     blurEffect.Enabled = false
     bukaUI()
     toggleFPP(false)
-    
     if notifConn then notifConn:Disconnect(); notifConn = nil end
     if fishConn then fishConn:Disconnect(); fishConn = nil end
-
     print("Farm Mode Disabled")
 end
 
@@ -479,7 +422,7 @@ WH_Top.ClipsDescendants = true
 local WH_Title = Instance.new("TextLabel", WH_Top)
 WH_Title.Size = UDim2.new(1,-100,1,0)
 WH_Title.Position = UDim2.new(0,6,0,0)
-WH_Title.Text = "CYRUS FARM [UNIVERSAL]"
+WH_Title.Text = "CYRUS FARM [FINAL]"
 WH_Title.TextColor3 = Color3.fromRGB(255,255,255)
 WH_Title.BackgroundTransparency = 1
 WH_Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -636,7 +579,7 @@ Test.TextColor3 = Color3.fromRGB(255,255,255)
 Instance.new("UICorner", Test).CornerRadius = UDim.new(0,8)
 
 ------------------------------------------------
--- WEBHOOK BACKEND LOGIC & SCANNER INVENTORY (UNIVERSAL)
+-- WEBHOOK BACKEND LOGIC & SCANNER INVENTORY (FINAL FIX NAME)
 ------------------------------------------------
 task.spawn(function()
     local ok, ItemUtility = pcall(function() return require(ReplicatedStorage.Shared.ItemUtility) end)
@@ -656,7 +599,7 @@ task.spawn(function()
         },
         Forgotten = {
             Webhook = "https://discord.com/api/webhooks/1504018896351662090/Y8oLlclVAwMVP2lS0h-8W4kGu3jK5p3XooMQYD41TlST00veiruwlvfVBwVIbql4qeak",
-            IDs = { [773] = true, [822] = true, [870] = true, [907] = true }
+            IDs = { [773] = true, [822] = true, [870] = true, [210] = true, [907] = true }
         },
         Secret = {
             Webhook = "https://discord.com/api/webhooks/1504019053193461841/TvwIWf8F9HC93r0t96EyXHOS5bf5kBGtDFOwMk-Hrc6fsNCsLUkHNj-tFNUviC6vPShQ",
@@ -688,19 +631,7 @@ task.spawn(function()
         [558] = false, [929] = false, 
     }
 
-    -- ID to Name Map (Reverse lookup untuk Webhook)
-    local IdToName = {}
-    local itemsFolder = ReplicatedStorage:FindFirstChild("Items")
-    if itemsFolder then
-        for _, itemScript in ipairs(itemsFolder:GetChildren()) do
-            if itemScript:IsA("ModuleScript") then
-                local okI, data = pcall(function() return require(itemScript) end)
-                if okI and data and data.Data and data.Data.Name and data.Data.Id then
-                    IdToName[data.Data.Id] = data.Data.Name
-                end
-            end
-        end
-    end
+    -- Kita HAPUS bagian IdToName manual karena sudah tidak perlu.
 
     local function sendWebRequest(url, method, headers, body)
         local requestFunc = http_request or syn.request or fluxus.request or http.request or request
@@ -734,22 +665,14 @@ task.spawn(function()
         task.spawn(sendWebRequest, webhookUrl .. "?wait=true", "POST", {["Content-Type"] = "application/json"}, HttpService:JSONEncode(payload))
     end
 
-    -- --- UNIVERSAL REMOTE FINDER SYSTEM ---
-    print("Mencari Remote Event Fishing...")
+    -- --- BRUTE FORCE REMOTE FINDER SYSTEM (FINAL FIX) ---
+    print("Mencari Remote Event Fishing (Brute Force)...")
     
     local foundRemotes = {}
-    local netFolder = ReplicatedStorage:FindFirstChild("Packages")
     
-    if netFolder then
-        for _, pkg in ipairs(netFolder:GetChildren()) do
-            local net = pkg:FindFirstChild("net")
-            if net then
-                for _, remote in ipairs(net:GetChildren()) do
-                    if remote:IsA("RemoteEvent") and string.sub(remote.Name, 1, 3) == "RE/" then
-                        table.insert(foundRemotes, remote)
-                    end
-                end
-            end
+    for _, v in ipairs(ReplicatedStorage:GetDescendants()) do
+        if v:IsA("RemoteEvent") and string.sub(v.Name, 1, 3) == "RE/" then
+            table.insert(foundRemotes, v)
         end
     end
     
@@ -760,16 +683,11 @@ task.spawn(function()
             if not TrackerEnabled then return end
             
             local args = {...}
-            -- Cek struktur data sesuai data Cobalt
-            -- args[1] = ID (Number)
-            -- args[2] = Metadata (Table: Weight, Shiny, VariantId)
-            
             local id = args[1]
             local metadata = args[2]
             
             if type(id) == "number" and type(metadata) == "table" then
                 if metadata.Weight and type(metadata.Weight) == "number" then
-                    -- FIX STUCK DETECTOR: Reset waktu saat dapat ikan (APAPUN IKANNYA)
                     LastCatchTime = tick()
                     
                     local fishId = id
@@ -777,24 +695,24 @@ task.spawn(function()
                     local mutationName = metadata.VariantId
                     local weight = metadata.Weight
                     
+                    -- DEFAULT VALUES
+                    local fishName = "Unknown Fish (ID: "..fishId..")"
+                    local rarity = "Unknown"
+                    
+                    -- AMBIL NAMA & RARITY SECARA LANGSUNG DARI ITEMUTILITY (FIX UNKNOWN NAME)
+                    pcall(function()
+                        local itemData = ItemUtility:GetItemData(fishId)
+                        if itemData and itemData.Data then
+                            fishName = itemData.Data.Name -- Ini yang memperbaiki nama
+                            if itemData.Data.Tier then rarity = TierUtility:GetTier(itemData.Data.Tier).Name
+                            elseif itemData.Probability then rarity = TierUtility:GetTierFromRarity(itemData.Probability.Chance).Name end
+                        end
+                    end)
+                    
                     -- Cek ID di Target
                     for catName, catData in pairs(Categories) do
                         if catData.IDs[fishId] then
-                            -- Cek Mutation jika diperlukan
                             if catData.RequireMutation and mutationName ~= catData.RequireMutation then break end
-                            
-                            -- Ambil Nama Ikan dari ID
-                            local fishName = IdToName[fishId] or "Unknown Fish (ID: "..fishId..")"
-                            
-                            -- Ambil Rarity
-                            local rarity = "Unknown"
-                            pcall(function()
-                                local itemData = ItemUtility:GetItemData(fishId)
-                                if itemData and itemData.Data then
-                                    if itemData.Data.Tier then rarity = TierUtility:GetTier(itemData.Data.Tier).Name
-                                    elseif itemData.Probability then rarity = TierUtility:GetTierFromRarity(itemData.Probability.Chance).Name end
-                                end
-                            end)
                             
                             notifyCatch(catData.Webhook, fishName, weight, isShiny, mutationName, rarity)
                             break 
@@ -804,7 +722,7 @@ task.spawn(function()
             end
         end)
     end
-    -- --- END UNIVERSAL REMOTE FINDER ---
+    -- --- END BRUTE FORCE REMOTE FINDER ---
 
     local DataReplion = Replion.Client:WaitReplion("Data", 30)
     if DataReplion then
