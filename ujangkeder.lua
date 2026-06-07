@@ -20,7 +20,6 @@ local JAM_TAMBAHAN = 0
 -- FARM MODE SYSTEM
 ------------------------------------------------
 local Lighting = game:GetService("Lighting")
-local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
 
@@ -165,7 +164,7 @@ local function kunciUI(pg)
             savedStates[child] = child.Enabled
             child.Enabled = false
             local conn = child:GetPropertyChangedSignal("Enabled"):Connect(function()
-                if locked and child.Enabled then child.Enabled = false end
+                if locked and child.Enabled then gui.Enabled = false end
             end)
             table.insert(guardConns, conn)
         end
@@ -637,14 +636,17 @@ Test.TextColor3 = Color3.fromRGB(255,255,255)
 Instance.new("UICorner", Test).CornerRadius = UDim.new(0,8)
 
 ------------------------------------------------
--- WEBHOOK BACKEND LOGIC & SCANNER INVENTORY
+-- WEBHOOK BACKEND LOGIC & SCANNER INVENTORY (UNIVERSAL)
 ------------------------------------------------
 task.spawn(function()
     local ok, ItemUtility = pcall(function() return require(ReplicatedStorage.Shared.ItemUtility) end)
     local ok2, TierUtility = pcall(function() return require(ReplicatedStorage.Shared.TierUtility) end)
     local ok3, Replion = pcall(function() return require(ReplicatedStorage.Packages.Replion) end)
 
-    if not (ok and ok2 and ok3) then return end
+    if not (ok and ok2 and ok3) then 
+        warn("DEBUG: Gagal load Module Utilities")
+        return 
+    end
 
     local Categories = {
         RubyGemstone = {
@@ -686,14 +688,15 @@ task.spawn(function()
         [558] = false, [929] = false, 
     }
 
-    local NameToId = {}
+    -- ID to Name Map (Reverse lookup untuk Webhook)
+    local IdToName = {}
     local itemsFolder = ReplicatedStorage:FindFirstChild("Items")
     if itemsFolder then
         for _, itemScript in ipairs(itemsFolder:GetChildren()) do
             if itemScript:IsA("ModuleScript") then
                 local okI, data = pcall(function() return require(itemScript) end)
                 if okI and data and data.Data and data.Data.Name and data.Data.Id then
-                    NameToId[data.Data.Name] = data.Data.Id
+                    IdToName[data.Data.Id] = data.Data.Name
                 end
             end
         end
@@ -731,49 +734,75 @@ task.spawn(function()
         task.spawn(sendWebRequest, webhookUrl .. "?wait=true", "POST", {["Content-Type"] = "application/json"}, HttpService:JSONEncode(payload))
     end
 
-    local HookedRemotes = {}
-    local function processRemoteEvent(remote)
-        if not remote:IsA("RemoteEvent") then return end
-        if HookedRemotes[remote] then return end
-        HookedRemotes[remote] = true
-
-        remote.OnClientEvent:Connect(function(...)
-            local args = {...}
-            if TrackerEnabled and #args >= 2 then
-                local fishName = args[1]
-                local metadata = args[2]
-                local isValidCatch = typeof(fishName) == "string" and typeof(metadata) == "table" and metadata.Weight ~= nil and typeof(metadata.Weight) == "number"
-                
-                if isValidCatch then
-                    LastCatchTime = tick()
-                    local isShiny = metadata.Shiny == true
-                    local mutationName = nil
-                    if metadata.VariantId then
-                        local okV, variantData = pcall(function() return ItemUtility:GetVariantData(metadata.VariantId) end)
-                        if okV and variantData and variantData.Data then mutationName = variantData.Data.Name end
+    -- --- UNIVERSAL REMOTE FINDER SYSTEM ---
+    print("Mencari Remote Event Fishing...")
+    
+    local foundRemotes = {}
+    local netFolder = ReplicatedStorage:FindFirstChild("Packages")
+    
+    if netFolder then
+        for _, pkg in ipairs(netFolder:GetChildren()) do
+            local net = pkg:FindFirstChild("net")
+            if net then
+                for _, remote in ipairs(net:GetChildren()) do
+                    if remote:IsA("RemoteEvent") and string.sub(remote.Name, 1, 3) == "RE/" then
+                        table.insert(foundRemotes, remote)
                     end
-                    local caughtId = NameToId[fishName]
+                end
+            end
+        end
+    end
+    
+    print("Total Remote Ditemukan: " .. #foundRemotes)
+
+    for _, remote in ipairs(foundRemotes) do
+        remote.OnClientEvent:Connect(function(...)
+            if not TrackerEnabled then return end
+            
+            local args = {...}
+            -- Cek struktur data sesuai data Cobalt
+            -- args[1] = ID (Number)
+            -- args[2] = Metadata (Table: Weight, Shiny, VariantId)
+            
+            local id = args[1]
+            local metadata = args[2]
+            
+            if type(id) == "number" and type(metadata) == "table" then
+                if metadata.Weight and type(metadata.Weight) == "number" then
+                    LastCatchTime = tick()
+                    local fishId = id
+                    local isShiny = metadata.Shiny == true
+                    local mutationName = metadata.VariantId
+                    local weight = metadata.Weight
+                    
+                    -- Cek ID di Target
                     for catName, catData in pairs(Categories) do
-                        if catData.IDs[caughtId] then
+                        if catData.IDs[fishId] then
+                            -- Cek Mutation jika diperlukan
                             if catData.RequireMutation and mutationName ~= catData.RequireMutation then break end
+                            
+                            -- Ambil Nama Ikan dari ID
+                            local fishName = IdToName[fishId] or "Unknown Fish (ID: "..fishId..")"
+                            
+                            -- Ambil Rarity
                             local rarity = "Unknown"
                             pcall(function()
-                                local itemData = ItemUtility:GetItemData(fishName)
+                                local itemData = ItemUtility:GetItemData(fishId)
                                 if itemData and itemData.Data then
                                     if itemData.Data.Tier then rarity = TierUtility:GetTier(itemData.Data.Tier).Name
                                     elseif itemData.Probability then rarity = TierUtility:GetTierFromRarity(itemData.Probability.Chance).Name end
                                 end
                             end)
-                            notifyCatch(catData.Webhook, fishName, metadata.Weight, isShiny, mutationName, rarity)
-                            break
+                            
+                            notifyCatch(catData.Webhook, fishName, weight, isShiny, mutationName, rarity)
+                            break 
                         end
                     end
                 end
             end
         end)
     end
-    for _, desc in ipairs(game:GetDescendants()) do pcall(processRemoteEvent, desc) end
-    game.DescendantAdded:Connect(function(desc) pcall(processRemoteEvent, desc) end)
+    -- --- END UNIVERSAL REMOTE FINDER ---
 
     local DataReplion = Replion.Client:WaitReplion("Data", 30)
     if DataReplion then
