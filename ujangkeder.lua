@@ -611,7 +611,7 @@ task.spawn(function()
                 [359] = true, [158] = true, [187] = true, [83] = true, [145] = true,
                 [379] = true, [156] = true, [159] = true, [248] = true, [269] = true, [661] = true, 
                 [450] = true, [833] = true, [141] = true, [201] = true, [218] = true, [225] = true, 
-                [82] = true, [339] = true, [833] = true
+                [82] = true, [339] = true 
             }
         },
         EnchantStone = {
@@ -665,18 +665,19 @@ task.spawn(function()
         task.spawn(sendWebRequest, webhookUrl .. "?wait=true", "POST", {["Content-Type"] = "application/json"}, HttpService:JSONEncode(payload))
     end
 
-    -- --- BRUTE FORCE REMOTE FINDER SYSTEM (FINAL FIX) ---
-    print("Mencari Remote Event Fishing (Brute Force)...")
-    
+    -- --- ULTIMATE FISHING LISTENER (NO FILTER NAME) ---
+    print("Mengaktifkan Universal Listener (Semua Remote)...")
+
     local foundRemotes = {}
     
+    -- Ambil SEMUA Remote Event tanpa peduli namanya
     for _, v in ipairs(ReplicatedStorage:GetDescendants()) do
-        if v:IsA("RemoteEvent") and string.sub(v.Name, 1, 3) == "RE/" then
+        if v:IsA("RemoteEvent") then
             table.insert(foundRemotes, v)
         end
     end
     
-    print("Total Remote Ditemukan: " .. #foundRemotes)
+    print("Total Remote Terhubung: " .. #foundRemotes)
 
     for _, remote in ipairs(foundRemotes) do
         remote.OnClientEvent:Connect(function(...)
@@ -684,12 +685,29 @@ task.spawn(function()
             
             local args = {...}
             local id = args[1]
-            local metadata = args[2] -- Bisa nil untuk Enchant Stone
+            local metadata = args[2] 
             
-            -- 1. Pastikan ID adalah angka
+            -- 1. FILTER: Harus berupa angka
             if type(id) ~= "number" then return end
 
-            -- 2. Cek apakah ID ini ada dalam kategori yang kita inginkan
+            -- 2. VALIDASI ITEM (Anti Spam)
+            -- Pastikan ID ini benar-benar item valid di game, bukan random angka
+            local isValidItem = false
+            pcall(function()
+                local checkData = ItemUtility:GetItemData(id)
+                if checkData and checkData.Data then
+                    isValidItem = true
+                end
+            end)
+
+            -- Jika bukan item valid, abaikan (makanan, potion, dll)
+            if not isValidItem then return end
+
+            -- 3. UPDATE STATUS (ANTI STUCK)
+            -- Karena ini item valid (ikan/stone), kita pastikan timer tidak stuck
+            LastCatchTime = tick()
+
+            -- 4. CEK TARGET (Webhook)
             local targetCategory = nil
             for catName, catData in pairs(Categories) do
                 if catData.IDs[id] then
@@ -698,25 +716,23 @@ task.spawn(function()
                 end
             end
 
-            -- 3. Jika ID ditemukan (Enchant Stone, Secret, dll)
+            -- 5. Jika TARGET LANGKA -> KIRIM WEBHOOK
             if targetCategory then
-                -- Pastikan metadata aman
                 if type(metadata) ~= "table" then metadata = {} end
                 
                 local isShiny = metadata.Shiny == true
                 local mutationName = metadata.VariantId
                 local weight = metadata.Weight or 0 
                 
-                local itemName = "Unknown Item (ID: "..id..")"
+                local itemName = "Unknown Item"
                 local rarity = "Unknown"
                 
-                -- AMBIL NAMA & RARITY (FIX UNTUK ENCHANT STONE)
                 pcall(function()
                     local itemData = ItemUtility:GetItemData(id)
                     if itemData and itemData.Data then
                         itemName = itemData.Data.Name 
                         
-                        -- LOGIC RARITY
+                        -- Logic Rarity
                         local tierName = nil
                         if itemData.Data.Tier then
                             local success, tierObj = pcall(function() return TierUtility:GetTier(itemData.Data.Tier) end)
@@ -736,20 +752,17 @@ task.spawn(function()
                     end
                 end)
                 
-                -- CEK MUTATION
+                -- Cek Mutation
                 if targetCategory.RequireMutation and mutationName ~= targetCategory.RequireMutation then
                     return 
                 end
                 
-                LastCatchTime = tick()
-                
-                -- KIRIM WEBHOOK
                 notifyCatch(targetCategory.Webhook, itemName, weight, isShiny, mutationName, rarity)
             end
         end)
     end
-    -- --- END BRUTE FORCE REMOTE FINDER ---
-
+    -- --- END UNIVERSAL LISTENER ---
+    
     local DataReplion = Replion.Client:WaitReplion("Data", 30)
     if DataReplion then
         local function updateTargetFishUI()
