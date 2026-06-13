@@ -611,7 +611,7 @@ task.spawn(function()
                 [359] = true, [158] = true, [187] = true, [83] = true, [145] = true,
                 [379] = true, [156] = true, [159] = true, [248] = true, [269] = true, [661] = true, 
                 [450] = true, [833] = true, [141] = true, [201] = true, [218] = true, [225] = true, 
-                [82] = true, [339] = true 
+                [82] = true, [339] = true, [833] = true
             }
         },
         EnchantStone = {
@@ -684,41 +684,67 @@ task.spawn(function()
             
             local args = {...}
             local id = args[1]
-            local metadata = args[2]
+            local metadata = args[2] -- Bisa nil untuk Enchant Stone
             
-            if type(id) == "number" and type(metadata) == "table" then
-                if metadata.Weight and type(metadata.Weight) == "number" then
-                    LastCatchTime = tick()
-                    
-                    local fishId = id
-                    local isShiny = metadata.Shiny == true
-                    local mutationName = metadata.VariantId
-                    local weight = metadata.Weight
-                    
-                    -- DEFAULT VALUES
-                    local fishName = "Unknown Fish (ID: "..fishId..")"
-                    local rarity = "Unknown"
-                    
-                    -- AMBIL NAMA & RARITY SECARA LANGSUNG DARI ITEMUTILITY (FIX UNKNOWN NAME)
-                    pcall(function()
-                        local itemData = ItemUtility:GetItemData(fishId)
-                        if itemData and itemData.Data then
-                            fishName = itemData.Data.Name -- Ini yang memperbaiki nama
-                            if itemData.Data.Tier then rarity = TierUtility:GetTier(itemData.Data.Tier).Name
-                            elseif itemData.Probability then rarity = TierUtility:GetTierFromRarity(itemData.Probability.Chance).Name end
+            -- 1. Pastikan ID adalah angka
+            if type(id) ~= "number" then return end
+
+            -- 2. Cek apakah ID ini ada dalam kategori yang kita inginkan
+            local targetCategory = nil
+            for catName, catData in pairs(Categories) do
+                if catData.IDs[id] then
+                    targetCategory = catData
+                    break
+                end
+            end
+
+            -- 3. Jika ID ditemukan (Enchant Stone, Secret, dll)
+            if targetCategory then
+                -- Pastikan metadata aman
+                if type(metadata) ~= "table" then metadata = {} end
+                
+                local isShiny = metadata.Shiny == true
+                local mutationName = metadata.VariantId
+                local weight = metadata.Weight or 0 
+                
+                local itemName = "Unknown Item (ID: "..id..")"
+                local rarity = "Unknown"
+                
+                -- AMBIL NAMA & RARITY (FIX UNTUK ENCHANT STONE)
+                pcall(function()
+                    local itemData = ItemUtility:GetItemData(id)
+                    if itemData and itemData.Data then
+                        itemName = itemData.Data.Name 
+                        
+                        -- LOGIC RARITY
+                        local tierName = nil
+                        if itemData.Data.Tier then
+                            local success, tierObj = pcall(function() return TierUtility:GetTier(itemData.Data.Tier) end)
+                            if success and tierObj then tierName = tierObj.Name end
                         end
-                    end)
-                    
-                    -- Cek ID di Target
-                    for catName, catData in pairs(Categories) do
-                        if catData.IDs[fishId] then
-                            if catData.RequireMutation and mutationName ~= catData.RequireMutation then break end
-                            
-                            notifyCatch(catData.Webhook, fishName, weight, isShiny, mutationName, rarity)
-                            break 
+                        
+                        if tierName then
+                            rarity = tierName
+                        elseif itemData.Data.Rarity then
+                            local success, rarityObj = pcall(function() return TierUtility:GetTier(itemData.Data.Rarity) end)
+                            if success and rarityObj then
+                                rarity = rarityObj.Name
+                            else
+                                rarity = tostring(itemData.Data.Rarity) 
+                            end
                         end
                     end
+                end)
+                
+                -- CEK MUTATION
+                if targetCategory.RequireMutation and mutationName ~= targetCategory.RequireMutation then
+                    return 
                 end
+                
+                LastCatchTime = tick()
+                
+                -- KIRIM WEBHOOK
+                notifyCatch(targetCategory.Webhook, itemName, weight, isShiny, mutationName, rarity)
             end
         end)
     end
