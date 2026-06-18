@@ -480,7 +480,7 @@ task.wait(1)
 loadSettings()
 
 -- ═══════════════════════════════════════════
--- TOGGLE AUTO BOOTH SET
+-- TOGGLE AUTO BOOTH SET (FIXED)
 -- ═══════════════════════════════════════════
 BoothTab:Space()
 
@@ -511,7 +511,8 @@ AutoBoothTogle = BoothTab:Toggle({
                             local itemToSell = queueList[1]
                             
                             local success, result = pcall(function()
-                                return SellRemote:InvokeServer(itemToSell.Category, itemToSell.UUID, itemToSell.Price)
+                                -- PERBAIKAN: Menambahkan "Booth" sebagai argumen pertama
+                                return SellRemote:InvokeServer("Booth", itemToSell.Category, itemToSell.UUID, itemToSell.Price)
                             end)
                             
                             if success and result == true then
