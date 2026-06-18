@@ -1,4 +1,4 @@
--- // WIND UI - BIG HUB SELLER (PURE DARK + FAST REACTION + UUID CACHE + AUTO SAVE/LOAD + AUTO BOOTH SET)
+-- // WIND UI - BIG HUB SELLER (AUTO BOOTH SET ONLY - FIXED VERSION)
 -- // Support Delta / Mobile
 
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
@@ -110,96 +110,43 @@ local AutoSetState = {
 }
 
 -- ═══════════════════════════════════════════
--- GLOBAL CACHE SYSTEM + UUID SAVER
--- ═══════════════════════════════════════════
-local CachedLists = { ["Fish"] = {}, ["Enchant Stones"] = {} }
-local ItemDatabase = { ["Fish"] = {}, ["Enchant Stones"] = {} }
-local SlotUIReferences = {}
-
-local function refreshGlobalCache()
-    local inv = Data:Get({ "Inventory" })
-    if typeof(inv) ~= "table" then return end
-    
-    ItemDatabase = { ["Fish"] = {}, ["Enchant Stones"] = {} }
-    local count = { ["Fish"] = {}, ["Enchant Stones"] = {} }
-    
-    for category, items in pairs(inv) do
-        if typeof(items) == "table" then
-            for _, v in ipairs(items) do
-                local ok, data = pcall(function() return ItemUtility.GetItemDataFromItemType(category, v.Id) end)
-                if ok and data and data.Data then
-                    local t = data.Data.Type
-                    if t == "Fish" or t == "Enchant Stones" then
-                        local name = data.Data.Name or "Unknown"
-                        count[t][name] = (count[t][name] or 0) + (v.Quantity or 1)
-                        
-                        if not ItemDatabase[t][name] then
-                            ItemDatabase[t][name] = {}
-                        end
-                        table.insert(ItemDatabase[t][name], v.UUID)
-                    end
-                end
-            end
-        end
-    end
-    
-    for cat, items in pairs(count) do
-        local list = {}
-        for name, total in pairs(items) do table.insert(list, name .. " (" .. total .. ")") end
-        table.sort(list)
-        CachedLists[cat] = list
-    end
-
-    for slotNum, ref in pairs(SlotUIReferences) do
-        if ref and ref.ItemDropdown and ref.State then
-            local cachedList = CachedLists[ref.State.Category] or {}
-            ref.ItemDropdown:Refresh(cachedList)
-        end
-    end
-end
-
-WindUI:Notify({ Title = "Loading", Content = "Menyimpan UUID Inventory..." })
-repeat task.wait(0.5) until typeof(Data:Get({ "Inventory" })) == "table" and next(Data:Get({ "Inventory" })) ~= nil
-
-refreshGlobalCache()
-WindUI:Notify({ Title = "Ready!", Content = "Semua UUID berhasil disimpan!" })
-
--- ═══════════════════════════════════════════
--- FUNGSI HELPER AUTO BOOTH SET
+-- FUNGSI HELPER AUTO BOOTH SET (FIXED)
 -- ═══════════════════════════════════════════
 local function scanAndQueueAutoSet()
     local inv = Data:Get({ "Inventory" })
     if typeof(inv) ~= "table" then return end
     
     AutoSetState.ItemQueue = {}
+    local totalScanned = 0
     
     for category, items in pairs(inv) do
         if typeof(items) == "table" then
             for _, v in ipairs(items) do
                 if AutoSetConfig[v.Id] then
-                    local config = AutoSetConfig[v.Id]
-                    local targetCategory = nil
+                    -- FIX: Mengambil data lengkap item untuk mencari tipe yang benar
+                    local ok, data = pcall(function() return ItemUtility.GetItemDataFromItemType(category, v.Id) end)
                     
-                    if category == "Fish" or category == "Enchant Stones" then
-                        targetCategory = category
-                    end
-                    
-                    if targetCategory then
+                    if ok and data and data.Data and data.Data.Type then
+                        local config = AutoSetConfig[v.Id]
+                        local correctType = data.Data.Type -- Ini penting! Menggunakan data.Data.Type
+                        
                         if not AutoSetState.ItemQueue[v.Id] then
                             AutoSetState.ItemQueue[v.Id] = {}
                         end
                         table.insert(AutoSetState.ItemQueue[v.Id], {
                             UUID = v.UUID,
-                            Category = targetCategory,
+                            Category = correctType, -- Menggunakan tipe yang benar dari server
                             Price = config.Price,
                             Name = config.Name,
                             Id = v.Id
                         })
+                        totalScanned = totalScanned + 1
                     end
                 end
             end
         end
     end
+    print("[AUTO SET] Scan selesai. Ditemukan " .. totalScanned .. " item dari list.")
 end
 
 local function isItemIdInBooth(itemId)
@@ -208,6 +155,7 @@ local function isItemIdInBooth(itemId)
     
     for _, listing in pairs(listings) do
         if listing and listing.Item then
+            -- Cek berdasarkan ID Item
             if listing.Item.Id == itemId then
                 return true
             end
@@ -217,273 +165,27 @@ local function isItemIdInBooth(itemId)
 end
 
 -- ═══════════════════════════════════════════
--- AUTO SAVE / LOAD SYSTEM
+-- INISIALISASI AWAL
 -- ═══════════════════════════════════════════
-local ConfigFileName = "CyrusStore_Config.json"
+WindUI:Notify({ Title = "Loading", Content = "Menyiapkan sistem..." })
+repeat task.wait(0.5) until typeof(Data:Get({ "Inventory" })) == "table" and next(Data:Get({ "Inventory" })) ~= nil
 
-local function saveSettings()
-    local dataToSave = {}
-    for i = 1, 5 do
-        if SlotUIReferences[i] and SlotUIReferences[i].State then
-            local st = SlotUIReferences[i].State
-            dataToSave[tostring(i)] = {
-                Category = st.Category,
-                DisplayName = st.DisplayName,
-                Price = st.Price
-            }
-        end
-    end
-    pcall(function()
-        writefile(ConfigFileName, HttpService:JSONEncode(dataToSave))
-    end)
-end
-
-local function loadSettings()
-    local success, result = pcall(function()
-        return readfile(ConfigFileName)
-    end)
-    
-    if success and result then
-        local decodeSuccess, decoded = pcall(function() return HttpService:JSONDecode(result) end)
-        if not decodeSuccess then return end
-        
-        for i = 1, 5 do
-            local slotData = decoded[tostring(i)]
-            if slotData and SlotUIReferences[i] then
-                local st = SlotUIReferences[i].State
-                local ui = SlotUIReferences[i]
-
-                st.Category = slotData.Category or "Fish"
-                pcall(function() 
-                    if ui.CategoryDropdown then ui.CategoryDropdown:Set(st.Category) end 
-                end)
-
-                local cachedList = CachedLists[st.Category] or {}
-                local itemExists = false
-                for _, v in ipairs(cachedList) do
-                    if v == slotData.DisplayName then
-                        itemExists = true
-                        break
-                    end
-                end
-
-                if itemExists then
-                    st.DisplayName = slotData.DisplayName
-                    st.CleanName = string.match(slotData.DisplayName, "(.+)%s%(") or slotData.DisplayName
-                    pcall(function() 
-                        if ui.ItemDropdown then ui.ItemDropdown:Set(slotData.DisplayName) end 
-                    end)
-                else
-                    st.DisplayName = ""
-                    st.CleanName = ""
-                end
-
-                if slotData.Price and slotData.Price ~= 0 then
-                    st.Price = slotData.Price
-                    pcall(function() 
-                        if ui.PriceInput then ui.PriceInput:Set(tostring(slotData.Price)) end 
-                    end)
-                end
-            end
-        end
-    end
-end
+scanAndQueueAutoSet()
+WindUI:Notify({ Title = "Ready!", Content = "Sistem siap digunakan!" })
 
 BoothTab:Button({
-    Title = "🔄 Refresh Data & UUID Inventori",
+    Title = "🔄 Refresh Inventory",
     Callback = function()
-        refreshGlobalCache()
-        loadSettings()
-        scanAndQueueAutoSet() -- Refresh queue juga
-        WindUI:Notify({ Title = "Updated", Content = "Data & Settingan diperbarui!" })
+        scanAndQueueAutoSet()
+        WindUI:Notify({ Title = "Updated", Content = "Inventory di-scan ulang!" })
     end
 })
 
 BoothTab:Space()
 
 -- ═══════════════════════════════════════════
--- SISTEM PEMBUATAN SLOT (MANUAL)
+-- TOGGLE AUTO BOOTH SET (FIXED LOGIC)
 -- ═══════════════════════════════════════════
-local function isItemNameListed(itemName)
-    local listings = SaleListingsReplion:Get(MyBoothPath)
-    if typeof(listings) ~= "table" then return false end
-    
-    for _, listing in pairs(listings) do
-        if listing and listing.Item then
-            local ok, data = pcall(function() return ItemUtility.GetItemDataFromItemType(listing.ItemType, listing.Item.Id) end)
-            if ok and data and data.Data and data.Data.Name == itemName then
-                return true
-            end
-        end
-    end
-    return false
-end
-
-local function createSlot(slotNumber)
-    local slotState = { Category = "Fish", DisplayName = "", CleanName = "", Price = 0, IsSelling = false }
-
-    local SlotSection = BoothTab:Section({
-        Title = "🤖  SLOT " .. slotNumber,
-        Box = true, BoxBorder = true, Opened = (slotNumber == 1),
-    })
-
-    local CategoryDropdown
-    local ItemDropdown
-    local PriceInput
-    local SellToggle
-
-    CategoryDropdown = SlotSection:Dropdown({
-        Title = "PILIH KATEGORI",
-        Values = {"Fish", "Enchant Stones"}, 
-        Value = "Fish", 
-        Callback = function(option)
-            slotState.Category = option
-            local cachedList = CachedLists[option] or {}
-            ItemDropdown:Refresh(cachedList)
-            slotState.DisplayName = ""
-            slotState.CleanName = ""
-            saveSettings()
-        end
-    })
-
-    SlotSection:Space()
-
-    ItemDropdown = SlotSection:Dropdown({
-        Title = "PILIH ITEM",
-        Values = CachedLists["Fish"],
-        Value = nil,
-        Callback = function(option)
-            slotState.DisplayName = option
-            slotState.CleanName = string.match(option, "(.+)%s%(") or option
-            saveSettings()
-        end
-    })
-
-    SlotSection:Space()
-
-    PriceInput = SlotSection:Input({
-        Title = "MASUKAN HARGA",
-        Placeholder = "Contoh: 10",
-        Callback = function(text)
-            local num = tonumber(text)
-            if num then slotState.Price = num end
-            saveSettings()
-        end
-    })
-
-    SlotSection:Space()
-
-    SellToggle = SlotSection:Toggle({
-        Title = "MULAI JUAL",
-        Value = false,
-        Callback = function(Value)
-            slotState.IsSelling = Value
-            if Value then
-                if slotState.CleanName == "" then
-                    WindUI:Notify({ Title = "Slot " .. slotNumber .. " Error", Content = "Pilih item dulu!" })
-                    task.defer(function() SellToggle:Set(false) end)
-                    return
-                end
-                
-                task.spawn(function()
-                    local failCount = 0
-                    local MAX_FAIL = 5
-                    
-                    while slotState.IsSelling do
-                        local isListed = isItemNameListed(slotState.CleanName)
-                        
-                        if isListed then
-                            failCount = 0 
-                            task.wait(1) 
-                        else
-                            local categoryDb = ItemDatabase[slotState.Category]
-                            local itemUuids = categoryDb and categoryDb[slotState.CleanName]
-                            
-                            if itemUuids and #itemUuids > 0 then
-                                failCount = 0
-                                local targetUUID = itemUuids[1] 
-                                
-                                local success, resultOrErr = pcall(function()
-                                    return SellRemote:InvokeServer("Booth", slotState.Category, targetUUID, slotState.Price)
-                                end)
-
-                                if success then
-                                    if resultOrErr == true then
-                                        table.remove(itemUuids, 1) 
-                                        local confirmWait = 0
-                                        while slotState.IsSelling and not isItemNameListed(slotState.CleanName) and confirmWait < 6 do
-                                            task.wait(0.5)
-                                            confirmWait += 0.5
-                                        end
-                                    else
-                                        table.remove(itemUuids, 1) 
-                                        task.wait(1) 
-                                    end
-                                else
-                                    task.wait(1.5) 
-                                end
-                            else
-                                task.wait(2)
-                                local inv = Data:Get({ "Inventory" })
-                                local foundNew = false
-                                if typeof(inv) == "table" then
-                                    for category, items in pairs(inv) do
-                                        if typeof(items) == "table" then
-                                            for _, item in ipairs(items) do
-                                                local ok, data = pcall(function() return ItemUtility.GetItemDataFromItemType(category, item.Id) end)
-                                                if ok and data and data.Data and data.Data.Name == slotState.CleanName then
-                                                    if not ItemDatabase[slotState.Category][slotState.CleanName] then
-                                                        ItemDatabase[slotState.Category][slotState.CleanName] = {}
-                                                    end
-                                                    table.insert(ItemDatabase[slotState.Category][slotState.CleanName], item.UUID)
-                                                    foundNew = true
-                                                end
-                                            end
-                                        end
-                                    end
-                                end
-
-                                if not foundNew then
-                                    failCount = failCount + 1
-                                    if failCount >= MAX_FAIL then
-                                        WindUI:Notify({ Title = "Slot " .. slotNumber .. " Habis", Content = slotState.CleanName .. " benar-benar habis di inventory." })
-                                        SellToggle:Set(false)
-                                        break
-                                    end
-                                end
-                            end
-                        end
-                        task.wait(0.3) 
-                    end
-                end)
-            else
-                print("[SLOT " .. slotNumber .. "] Berhenti jual.")
-            end
-        end
-    })
-    
-    SlotUIReferences[slotNumber] = { 
-        State = slotState, 
-        ItemDropdown = ItemDropdown, 
-        CategoryDropdown = CategoryDropdown, 
-        PriceInput = PriceInput, 
-        Toggle = SellToggle 
-    }
-end
-
--- ═══════════════════════════════════════════
--- EKSEKUSI 5 SLOT & LOAD SETTINGAN
--- ═══════════════════════════════════════════
-for i = 1, 5 do createSlot(i) end
-
-task.wait(1)
-loadSettings()
-
--- ═══════════════════════════════════════════
--- TOGGLE AUTO BOOTH SET (FIXED)
--- ═══════════════════════════════════════════
-BoothTab:Space()
-
 AutoBoothTogle = BoothTab:Toggle({
     Title = "🤖 AUTO BOOTH SET",
     Value = false,
@@ -501,6 +203,7 @@ AutoBoothTogle = BoothTab:Toggle({
                     for itemId, configData in pairs(AutoSetConfig) do
                         if not AutoSetState.IsRunning then break end
                         
+                        -- Cek apakah item sudah ada di booth
                         if isItemIdInBooth(itemId) then
                             continue
                         end
@@ -511,13 +214,20 @@ AutoBoothTogle = BoothTab:Toggle({
                             local itemToSell = queueList[1]
                             
                             local success, result = pcall(function()
-                                -- PERBAIKAN: Menambahkan "Booth" sebagai argumen pertama
+                                -- FIX: Menggunakan 'itemToSell.Category' yang sudah diambil dari data.Data.Type
                                 return SellRemote:InvokeServer("Booth", itemToSell.Category, itemToSell.UUID, itemToSell.Price)
                             end)
                             
-                            if success and result == true then
-                                table.remove(queueList, 1)
-                                listedAnyThisCycle = true
+                            if success then
+                                if result == true then
+                                    print("[AUTO SET] Sukses menjual: " .. itemToSell.Name)
+                                    table.remove(queueList, 1)
+                                    listedAnyThisCycle = true
+                                else
+                                    print("[AUTO SET] Gagal jual " .. itemToSell.Name .. ": " .. tostring(result))
+                                end
+                            else
+                                print("[AUTO SET] Error Remote: " .. tostring(result))
                             end
                             
                             task.wait(0.5)
@@ -552,16 +262,6 @@ ClearBoothToggle = BoothTab:Toggle({
     Value = false,
     Callback = function(Value)
         if Value then
-            for slotNum, ref in pairs(SlotUIReferences) do
-                if ref and ref.State and ref.State.IsSelling then
-                    ref.State.IsSelling = false
-                    if ref.Toggle then
-                        task.defer(function() ref.Toggle:Set(false) end)
-                    end
-                end
-            end
-            
-            -- Matikan Auto Booth Set juga jika sedang jalan
             if AutoSetState.IsRunning then
                 AutoSetState.IsRunning = false
                 AutoBoothTogle:Set(false)
@@ -595,7 +295,7 @@ ClearBoothToggle = BoothTab:Toggle({
             WindUI:Notify({ Title = "Booth Dibersihkan!", Content = deleteCount .. " item berhasil dihapus dari booth." })
             
             task.wait(1)
-            refreshGlobalCache()
+            scanAndQueueAutoSet()
             ClearBoothToggle:Set(false)
         end
     end
