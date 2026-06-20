@@ -208,7 +208,6 @@ FM_Layout.Padding = UDim.new(0,8)
 FM_Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 FM_Layout.VerticalAlignment = Enum.VerticalAlignment.Center
 
--- Stats Atas (PING FPS CPU)
 local FM_TopStats = Instance.new("Frame", FM_Container)
 FM_TopStats.Size = UDim2.new(1,0,0,42)
 FM_TopStats.BackgroundTransparency = 1
@@ -234,7 +233,6 @@ local PingText = FM_createTextStat(FM_TopStats, "PING")
 local FpsText = FM_createTextStat(FM_TopStats, "FPS")
 local CpuText = FM_createTextStat(FM_TopStats, "CPU")
 
--- Box Total Tokens (HANYA ANGKA)
 local TokenBox = Instance.new("Frame", FM_Container)
 TokenBox.Size = UDim2.new(0.92,0,0,35)
 TokenBox.BackgroundTransparency = 1
@@ -250,7 +248,6 @@ TokenText.Font = Enum.Font.GothamBold
 TokenText.TextXAlignment = Enum.TextXAlignment.Center
 TokenText.Position = UDim2.new(0, 0, 0, -8)
 
--- Tombol Exit
 local ExitButton = Instance.new("TextButton", FM_Container)
 ExitButton.Size = UDim2.new(0.92,0,0,28)
 ExitButton.Text = "EXIT AUTO BOOTH"
@@ -260,7 +257,6 @@ ExitButton.TextColor3 = Color3.fromRGB(255,255,255)
 ExitButton.BackgroundColor3 = Color3.fromRGB(180,50,50)
 Instance.new("UICorner", ExitButton).CornerRadius = UDim.new(0,10)
 
--- Loop Update Stats
 local acc = 0
 RunService.RenderStepped:Connect(function(delta)
     acc += delta
@@ -382,14 +378,14 @@ FloatBtn.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------
--- AUTO SELLER CONFIG & SYSTEM (MEKANIS BARU)
+-- AUTO SELLER CONFIG & SYSTEM
 ------------------------------------------------
-local PlayerCF = CFrame.new(
-    -1012.2177124023438, 14.589550018310547, 3050.25537109375,
-    -0.577595591545105, 0, 0.8163230419158936,
-    0, 1, 0,
-    -0.8163230419158936, 0, -0.577595591545105
-)
+local BoothCFs = {
+    CFrame.new(-1015.32189941406250, 18.56108856201172, 3051.73754882812500, -0.49987316131592, 0.00000000000000, 0.86609864234924, 0.00000000000000, 1.00000000000000, 0.00000000000000, -0.86609864234924, 0.00000000000000, -0.49987316131592),
+    CFrame.new(-1009.32385253906250, 18.56108856201172, 3062.13085937500000, -0.49987316131592, 0.00000000000000, 0.86609864234924, 0.00000000000000, 1.00000000000000, 0.00000000000000, -0.86609864234924, 0.00000000000000, -0.49987316131592),
+    CFrame.new(-1003.32580566406250, 18.56108856201172, 3072.52441406250000, -0.49987316131592, 0.00000000000000, 0.86609864234924, 0.00000000000000, 1.00000000000000, 0.00000000000000, -0.86609864234924, 0.00000000000000, -0.49987316131592),
+    CFrame.new(-997.32769775390625, 18.56108856201172, 3082.91796875000000, -0.49987316131592, 0.00000000000000, 0.86609864234924, 0.00000000000000, 1.00000000000000, 0.00000000000000, -0.86609864234924, 0.00000000000000, -0.49987316131592)
+}
 
 local BLACKLIST_IDS = {
     10849334132, 10757298410, 10762189210, 10757278851, 10762153032, 11098889630, 9684028951, 9709193019
@@ -404,14 +400,14 @@ local AutoSetConfig = {
     [339] = { Name = "Skeleton Narwhal", Price = 3 },
     [226] = { Name = "Megalodon", Price = 21 },
     [228] = { Name = "Lochness Monster", Price = 51 },
-    [833] = { Name = "Bonemaw Tyrant", Price = 16 },
+    [833] = { Name = "Bonemaw Tyrant", Price = 21 },
     [882] = { Name = "Deepsea Monster Axol", Price = 11 },
     [558] = { Name = "Evolved Enchant Stone", Price = 3 },
     [873] = { Name = "Eggy Enchant Stone", Price = 61 },
     [929] = { Name = "Runic Enchant Stone", Price = 51 },
 }
 
--- ================= LOAD LIBRARY, DATA, & TOKEN COUNTER =================
+-- ================= LOAD LIBRARY & SYSTEM =================
 task.spawn(function()
     Notify("SYSTEM", "Loading Library...")
     local Packages = ReplicatedStorage:WaitForChild("Packages")
@@ -441,7 +437,6 @@ task.spawn(function()
     local DeleteRemote = TradeData.Remotes.DeleteSaleListing
     local MyBoothPath = {"Players", tostring(myId), "Booth"}
 
-    -- TOKEN COUNTER SYSTEM
     local initialTokens = Data:Get("Tokens")
     if typeof(initialTokens) == "number" then
         TokenText.Text = tostring(initialTokens)
@@ -454,7 +449,6 @@ task.spawn(function()
 
     Notify("SYSTEM", "Data Siap. Memulai Seller...")
     
-    -- ================= FUNGSI HOP =================
     local function doServerHop()
         Notify("HOP", "Mencari server sepi...")
         local startTick = tick()
@@ -466,7 +460,7 @@ task.spawn(function()
             if jobId == game.JobId then continue end
             if type(data) == "table" and data.Players then
                 local count = #data.Players
-                if count > 0 and count <= 5 and count < lowestPlayerCount then
+                if count > 0 and count <= 10 and count < lowestPlayerCount then
                     lowestPlayerCount = count
                     targetJobId = jobId
                 end
@@ -474,7 +468,7 @@ task.spawn(function()
         end
         if targetJobId then
             Notify("HOP", "Pindah: "..lowestPlayerCount.." Pemain.")
-            task.wait(10)
+            task.wait(3)
             pcall(function()
                 if RemoteConfigs:Get("ServerBrowser") == true then
                     Net:RemoteEvent("ServerHop"):FireServer(targetJobId)
@@ -487,32 +481,23 @@ task.spawn(function()
         return false
     end
 
-    -- ========================================
-    -- MEKANIS BARU 1: UUID CACHE DATABASE
-    -- ========================================
     local ItemDatabase = {} 
     local AutoSetState = { IsRunning = false }
 
     local function refreshGlobalCache()
         local inv = Data:Get({ "Inventory" })
         if typeof(inv) ~= "table" then return end
-        
-        ItemDatabase = {} -- Reset database sebelum scan ulang
-        
+        ItemDatabase = {}
         for category, items in pairs(inv) do
             if typeof(items) == "table" then
                 for _, v in ipairs(items) do
-                    -- Hanya proses jika ID nya ada di config kita
                     if AutoSetConfig[v.Id] then
                         local ok, data = pcall(function() return ItemUtility.GetItemDataFromItemType(category, v.Id) end)
                         if ok and data and data.Data and data.Data.Type then
                             local t = data.Data.Type
                             local configName = AutoSetConfig[v.Id].Name
-                            
                             if not ItemDatabase[t] then ItemDatabase[t] = {} end
                             if not ItemDatabase[t][configName] then ItemDatabase[t][configName] = {} end
-                            
-                            -- SIMPAN UUID KE DATABASE
                             table.insert(ItemDatabase[t][configName], {
                                 UUID = v.UUID,
                                 Category = t,
@@ -525,18 +510,14 @@ task.spawn(function()
         end
     end
 
-    -- ========================================
-    -- MEKANIS BARU 2: ANTI JUAL GANDA (CEK BOOTH)
-    -- ========================================
     local function isItemNameListed(itemName)
         local listings = SaleListingsReplion:Get(MyBoothPath)
         if typeof(listings) ~= "table" then return false end
-        
         for _, listing in pairs(listings) do
             if listing and listing.Item then
                 local ok, data = pcall(function() return ItemUtility.GetItemDataFromItemType(listing.ItemType, listing.Item.Id) end)
                 if ok and data and data.Data and data.Data.Name == itemName then
-                    return true -- SUDAH ADA DI BOOTH
+                    return true
                 end
             end
         end
@@ -552,33 +533,23 @@ task.spawn(function()
         end
     end
 
-    -- ========================================
-    -- MEKANIS BARU 3: PARALLEL LOOPS (CEK & JUAL BARENGAN)
-    -- ========================================
     local function startAutoSelling()
         if AutoSetState.IsRunning then return end
         AutoSetState.IsRunning = true
-        
         Notify("SELL", "Scan & Simpan UUID...")
         refreshGlobalCache() 
-        
         Notify("SELL", "Auto Selling DIMULAI (Parallel)!")
         
-        -- Jalankan tugas terpisah untuk SETIAP ID secara bersamaan
         for configId, configData in pairs(AutoSetConfig) do
             task.spawn(function()
                 local itemFailCount = 0
                 local MAX_FAIL = 3
-
                 while AutoSetState.IsRunning do
-                    -- Cek apakah item ini sudah ada di booth
                     local isListed = isItemNameListed(configData.Name)
-                    
                     if isListed then
                         itemFailCount = 0
-                        task.wait(0.5) -- Cek ulang setiap 0.5 detik kalau masih ada di booth
+                        task.wait(0.5)
                     else
-                        -- Cari UUID di Database Memory
                         local targetUUIDData = nil
                         for catType, items in pairs(ItemDatabase) do
                             if items[configData.Name] and #items[configData.Name] > 0 then
@@ -586,25 +557,15 @@ task.spawn(function()
                                 break
                             end
                         end
-
                         if targetUUIDData then
                             itemFailCount = 0
-                            local success, resultOrErr = pcall(function()
-                                return SellRemote:InvokeServer("Booth", targetUUIDData.Category, targetUUIDData.UUID, targetUUIDData.Price)
-                            end)
-
-                            if success and resultOrErr == true then
-                                -- Cuma nunggu 0.3 detik untuk sinkronisasi server
-                                local confirmWait = 0
-                                while AutoSetState.IsRunning and not isItemNameListed(configData.Name) and confirmWait < 0.3 do
-                                    task.wait(0.1)
-                                    confirmWait += 0.1
-                                end
-                            else
-                                task.wait(0.5)
+                            pcall(function() SellRemote:InvokeServer("Booth", targetUUIDData.Category, targetUUIDData.UUID, targetUUIDData.Price) end)
+                            local confirmWait = 0
+                            while AutoSetState.IsRunning and not isItemNameListed(configData.Name) and confirmWait < 0.3 do
+                                task.wait(0.1)
+                                confirmWait += 0.1
                             end
                         else
-                            -- Memory kosong, lakukan Mini-Scan sekali saja
                             task.wait(0.5)
                             local inv = Data:Get({ "Inventory" })
                             local foundNew = false
@@ -618,7 +579,6 @@ task.spawn(function()
                                                     local t = data.Data.Type
                                                     if not ItemDatabase[t] then ItemDatabase[t] = {} end
                                                     if not ItemDatabase[t][configData.Name] then ItemDatabase[t][configData.Name] = {} end
-                                                    
                                                     table.insert(ItemDatabase[t][configData.Name], {
                                                         UUID = item.UUID,
                                                         Category = t,
@@ -633,12 +593,11 @@ task.spawn(function()
                                     end
                                 end
                             end
-
                             if not foundNew then
                                 itemFailCount = itemFailCount + 1
                                 if itemFailCount >= MAX_FAIL then
                                     Notify("SELL", configData.Name .. " habis.")
-                                    break -- Berhenti loop untuk ID ini saja, ID lain tetap jalan
+                                    break
                                 end
                             else
                                 itemFailCount = 0
@@ -650,11 +609,12 @@ task.spawn(function()
         end
     end
 
-    -- ================= MAIN LOOP SELLER =================
+    -- ================= MAIN LOOP =================
     pcall(function()
         repeat task.wait(0.5) until typeof(Data:Get({ "Inventory" })) == "table"
         Notify("SYSTEM", "Cek Blacklist...")
-        task.wait(5)
+        task.wait(2)
+        
         local foundTarget = false
         for _, player in ipairs(Players:GetPlayers()) do
             if player.UserId ~= myId then
@@ -667,60 +627,80 @@ task.spawn(function()
             end
             if foundTarget then break end
         end
+        
         if foundTarget then
             Notify("BLOCK", "Ada akun lain! HOP!")
-            task.wait(5)
+            task.wait(3)
             doServerHop()
         else
-            Notify("SAFE", "Cari Booth...")
-            task.wait(5)
+            Notify("SAFE", "Deteksi Booth Sekali Jalan...")
             
             local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
             local hrp = char:WaitForChild("HumanoidRootPart")
             
-            hrp.CFrame = PlayerCF
-            
-            while true do
-                hrp.CFrame = PlayerCF
-                task.wait(1)
-                local bestPrompt, bestDist = nil, math.huge
-                local foundMyBooth = false
-                for _, booth in ipairs(workspace:GetDescendants()) do
-                    if booth.Name == "Booth" then
-                        local owner = booth:GetAttribute("Owner")
-                        if owner == myId then
-                            foundMyBooth = true
-                            break 
-                        end
-                        if owner == 0 then
-                            local prompt = booth:FindFirstChild("ProximityPrompt", true)
-                            if prompt and prompt.ActionText == "Claim Booth" then
-                                local dist = (prompt.Parent.WorldPosition - PlayerCF.Position).Magnitude
-                                if dist < 10 and dist < bestDist then
-                                    bestDist = dist
-                                    bestPrompt = prompt
-                                end
-                            end
+            local boothKosong = {}
+            local sudahPunyaBooth = false
+
+            for i, boothCF in ipairs(BoothCFs) do
+                local closestBoothModel = nil
+                local shortestDist = math.huge
+                
+                for _, booth in ipairs(Workspace:GetDescendants()) do
+                    if booth:IsA("Model") and booth.Name == "Booth" then
+                        local dist = (booth:GetPivot().Position - boothCF.Position).Magnitude
+                        if dist < shortestDist then
+                            shortestDist = dist
+                            closestBoothModel = booth
                         end
                     end
                 end
-                if foundMyBooth then
-                    Notify("SUCCESS", "Booth Didapat! Setup...")
+                
+                if closestBoothModel then
+                    local owner = closestBoothModel:GetAttribute("Owner")
+                    if owner == myId then
+                        sudahPunyaBooth = true
+                        break
+                    elseif owner == 0 or owner == nil then
+                        table.insert(boothKosong, {Index = i, CF = boothCF, Model = closestBoothModel})
+                    end
+                end
+            end
+
+            if sudahPunyaBooth then
+                Notify("SUCCESS", "Kamu Sudah Punya Booth! Setup...")
+                clearAllBoothItems()
+                startAutoSelling()
+            elseif #boothKosong > 0 then
+                Notify("BOOTH", "Menemukan Booth Kosong, Mendarat...")
+                local targetBooth = boothKosong[1]
+                local posisiMendarat = targetBooth.CF * CFrame.new(0, 0, 4)
+                
+                hrp.CFrame = posisiMendarat
+                task.wait(1.5)
+                
+                local prompt = targetBooth.Model:FindFirstChild("ProximityPrompt", true)
+                if prompt and prompt.ActionText == "Claim Booth" then
+                    if fireproximityprompt then
+                        fireproximityprompt(prompt)
+                    else
+                        keypress(0x45) task.wait(0.1) keyrelease(0x45)
+                    end
+                    
+                    task.wait(1)
+                    Notify("SUCCESS", "Booth Diambil! Setup...")
                     clearAllBoothItems()
                     startAutoSelling()
-                    break 
-                end
-                if not bestPrompt then
-                    Notify("FULL", "HOP...")
+                else
+                    Notify("FULL", "Booth tidak bisa diambil, HOP...")
                     doServerHop()
-                    break
                 end
-                fireproximityprompt(bestPrompt)
-                task.wait(2)
+            else
+                Notify("FULL", "Semua booth penuh, HOP...")
+                doServerHop()
             end
         end
-    end)
-end)
+    end) -- MENUTUP pcall(function()
+end) -- MENUTUP task.spawn(function()
 
 ------------------------------------------------
 -- AUTO START FARM MODE
