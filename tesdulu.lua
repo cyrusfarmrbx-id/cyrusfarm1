@@ -741,6 +741,12 @@ task.spawn(function()
                     Notify("FULL", "Booth tidak bisa diambil, HOP...")
                     doServerHop()
                 end
+            else
+                Notify("FULL", "Semua booth penuh, HOP...")
+                doServerHop()
+            end
+        end
+    end)
 
 ------------------------------------------------
 -- AUTO START FARM MODE
