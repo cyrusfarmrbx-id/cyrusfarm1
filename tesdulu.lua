@@ -752,6 +752,14 @@ task.spawn(function()
                         Notify("FAILED", "Gagal Ambil Booth, HOP...")
                         doServerHop()
                     end
+                end -- << TAMBahan: Menutup 'if prompt and prompt.ActionText == "Claim Booth"'
+            else -- << TAMBahan: Jika tidak ada booth kosong sama sekali
+                Notify("FULL", "Semua booth penuh, HOP...")
+                doServerHop()
+            end -- << TAMBahan: Menutup 'elseif #boothKosong > 0'
+        end -- << TAMBahan: Menutup 'if sudahPunyaBooth then'
+        end -- << TAMBahan: Menutup blok 'else' (Bagian SAFE)
+    end) -- << TAMBahan: Menutup 'pcall(function()'
 
 ------------------------------------------------
 -- AUTO START FARM MODE
@@ -778,4 +786,4 @@ task.spawn(function()
             if dl.Enabled then autoClose() end
         end)
     end
-end)
+end) -- << PERBAIKAN: Tadi ketulis 'end)}' seharusnya 'end)'
