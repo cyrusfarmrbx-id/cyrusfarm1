@@ -731,35 +731,16 @@ task.spawn(function()
                         keypress(0x45) task.wait(0.1) keyrelease(0x45)
                     end
                     
-                    task.wait(2) -- Ditambah sedikit jeda awalnya
+                    task.wait(1) -- Jeda 1 detik cukup untuk server menyimpan data booth
                     
-                    -- Verifikasi aman setelah menyentuh (MENCEGAH HOP PALSU)
-                    local verifyOwner = nil
-                    local verifyWait = 0
-                    
-                    -- Cek ulang setiap 0.5 detik, maksimal 5 detik
-                    repeat 
-                        task.wait(0.5)
-                        verifyOwner = targetBooth.Model:GetAttribute("Owner")
-                        verifyWait += 0.5
-                    until verifyOwner == myId or verifyWait >= 5
-                    
-                    if verifyOwner == myId then
-                        Notify("SUCCESS", "Booth Berhasil Diambil! Setup...")
-                        clearAllBoothItems()
-                        startAutoSelling()
-                    else
-                        Notify("FAILED", "Gagal Ambil Booth, HOP...")
-                        doServerHop()
-                    end
-                end -- << TAMBahan: Menutup 'if prompt and prompt.ActionText == "Claim Booth"'
-            else -- << TAMBahan: Jika tidak ada booth kosong sama sekali
-                Notify("FULL", "Semua booth penuh, HOP...")
-                doServerHop()
-            end -- << TAMBahan: Menutup 'elseif #boothKosong > 0'
-        end -- << TAMBahan: Menutup 'if sudahPunyaBooth then'
-        end -- << TAMBahan: Menutup blok 'else' (Bagian SAFE)
-    end) -- << TAMBahan: Menutup 'pcall(function()'
+                    Notify("SUCCESS", "Booth Diambil! Setup...")
+                    clearAllBoothItems()
+                    startAutoSelling()
+                else
+                    -- Kalau sampai sini, berarti ada yang kosong tapi tombolnya tidak ketemu / sudah diambil orang lain
+                    Notify("FULL", "Booth tidak bisa diambil, HOP...")
+                    doServerHop()
+                end
 
 ------------------------------------------------
 -- AUTO START FARM MODE
