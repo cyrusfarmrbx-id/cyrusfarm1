@@ -592,7 +592,7 @@ task.spawn(function()
             if jobId == game.JobId then continue end
             if type(data) == "table" and data.Players then
                 local count = #data.Players
-                if count > 0 and count <= 10 and count < lowestPlayerCount then
+                if count < lowestPlayerCount then
                     lowestPlayerCount = count
                     targetJobId = jobId
                 end
