@@ -585,31 +585,51 @@ task.spawn(function()
         Notify("HOP", "Mencari server sepi...")
         local startTick = tick()
         repeat task.wait(0.5) until (ServerBrowserData.Data.Servers and next(ServerBrowserData.Data.Servers) ~= nil) or (tick() - startTick > 10)
-        if not ServerBrowserData.Data.Servers then return false end
+        
+        if not ServerBrowserData.Data.Servers then 
+            Notify("HOP", "Gagal load daftar server, coba fallback...")
+            pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId) end)
+            return false 
+        end
+        
         local servers = ServerBrowserData.Data.Servers
         local targetJobId, lowestPlayerCount = nil, math.huge
+        
         for jobId, data in pairs(servers) do
             if jobId == game.JobId then continue end
-            if type(data) == "table" and data.Players then
-                local count = #data.Players
-                if count < lowestPlayerCount then
-                    lowestPlayerCount = count
-                    targetJobId = jobId
-                end
+            
+            -- FIX: Data Players langsung berupa Number, bukan Table
+            local count = 0
+            if typeof(data) == "table" then
+                count = tonumber(data.Players) or 0
+            end
+            
+            if count < lowestPlayerCount then
+                lowestPlayerCount = count
+                targetJobId = jobId
             end
         end
+        
         if targetJobId then
-            Notify("HOP", "Pindah: "..lowestPlayerCount.." Pemain.")
-            task.wait(3)
+            Notify("HOP", "Pindah ke server dengan "..lowestPlayerCount.." pemain.")
+            task.wait(2)
             pcall(function()
-                if RemoteConfigs:Get("ServerBrowser") == true then
+                -- FIX: Cek apakah fitur ServerBrowser diizinkan oleh RemoteConfigs
+                local isServerHopEnabled = false
+                pcall(function() isServerHopEnabled = RemoteConfigs:Get("ServerBrowser") end)
+                
+                if isServerHopEnabled == true then
                     Net:RemoteEvent("ServerHop"):FireServer(targetJobId)
                 else
+                    -- Fallback jika fitur dinonaktifkan dev
                     TeleportService:TeleportToPlaceInstance(game.PlaceId, targetJobId)
                 end
             end)
             return true
+        else
+            Notify("HOP", "Tidak ada server lain yang ditemukan.")
         end
+        
         return false
     end
 
