@@ -302,6 +302,138 @@ FloatStroke.Transparency = 0.1
 Instance.new("UICorner", FloatBtn).CornerRadius = UDim.new(1, 0)
 
 ------------------------------------------------
+-- FLY TO TARGET SYSTEM
+------------------------------------------------
+local FLY_CONFIG = {
+    SPEED = 50,
+    HEIGHT_OFFSET = 10,
+    BOB_SPEED = 8,
+    BOB_AMOUNT = 0.15,
+    TILT_AMOUNT = 0.03
+}
+
+local function flyToTarget(TargetCF)
+    local character = LocalPlayer.Character
+    if not character then return false end
+    local HRP = character:FindFirstChild("HumanoidRootPart")
+    local Humanoid = character:FindFirstChild("Humanoid")
+    if not HRP or not Humanoid then return false end
+    
+    local startPos = HRP.CFrame
+    local targetPos = TargetCF + Vector3.new(0, FLY_CONFIG.HEIGHT_OFFSET, 0)
+    
+    local direction = (targetPos.Position - startPos.Position)
+    local totalDistance = direction.Magnitude
+    if totalDistance < 1 then
+        HRP.CFrame = TargetCF
+        return true
+    end
+    direction = direction.Unit
+    
+    local originalWalkSpeed = Humanoid.WalkSpeed
+    Humanoid.WalkSpeed = 0
+    
+    -- Efek Partikel
+    local attachment = Instance.new("Attachment")
+    attachment.Parent = HRP
+    
+    local particles = Instance.new("ParticleEmitter")
+    particles.Color = ColorSequence.new(Color3.fromRGB(150, 200, 255), Color3.fromRGB(100, 150, 255))
+    particles.Size = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.5),
+        NumberSequenceKeypoint.new(0.5, 1),
+        NumberSequenceKeypoint.new(1, 0)
+    })
+    particles.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.8),
+        NumberSequenceKeypoint.new(0.5, 0.3),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    particles.Lifetime = NumberRange.new(0.3, 0.6)
+    particles.Rate = 30
+    particles.Speed = NumberRange.new(2, 5)
+    particles.SpreadAngle = Vector2.new(30, 30)
+    particles.Acceleration = Vector3.new(0, -5, 0)
+    particles.LightEmission = 0.5
+    particles.Parent = attachment
+    
+    -- Trail Effect
+    local trail = Instance.new("Trail")
+    trail.Attachment0 = attachment
+    local trailAtt0 = Instance.new("Attachment")
+    trailAtt0.Position = Vector3.new(0, 0, -1)
+    trailAtt0.Parent = HRP
+    trail.Attachment1 = trailAtt0
+    trail.Lifetime = 0.3
+    trail.MinLength = 0.1
+    trail.FaceCamera = true
+    trail.LightEmission = 0.5
+    trail.LightInfluence = 0
+    trail.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    trail.Color = ColorSequence.new(Color3.fromRGB(100, 180, 255))
+    trail.WidthScale = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 1),
+        NumberSequenceKeypoint.new(1, 0)
+    })
+    trail.Parent = HRP
+    
+    local startTime = tick()
+    local completed = false
+    
+    local connection
+    connection = RunService.Heartbeat:Connect(function(dt)
+        local elapsed = tick() - startTime
+        local progress = math.min((elapsed * FLY_CONFIG.SPEED) / totalDistance, 1)
+        
+        -- Efek blob/bobbing naik turun
+        local currentPos = startPos.Position:Lerp(targetPos.Position, progress)
+        local bobOffset = math.sin(elapsed * FLY_CONFIG.BOB_SPEED) * FLY_CONFIG.BOB_AMOUNT
+        currentPos = currentPos + Vector3.new(0, bobOffset, 0)
+        
+        -- Rotasi menghadap target + sedikit miring
+        local lookCFrame = CFrame.lookAt(currentPos, currentPos + direction)
+        local tiltAngle = math.sin(elapsed * FLY_CONFIG.BOB_SPEED * 2) * FLY_CONFIG.TILT_AMOUNT
+        local tiltCFrame = CFrame.Angles(tiltAngle, 0, tiltAngle * 0.5)
+        
+        local finalCFrame = lookCFrame * tiltCFrame
+        
+        -- Terapkan posisi
+        HRP.CFrame = finalCFrame
+        
+        if Humanoid then
+            Humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+        end
+        
+        -- Selesai
+        if progress >= 1 then
+            connection:Disconnect()
+            completed = true
+            
+            HRP.CFrame = TargetCF
+            
+            Humanoid.WalkSpeed = originalWalkSpeed
+            Humanoid:ChangeState(Enum.HumanoidStateType.Landed)
+            
+            -- Hapus efek
+            pcall(function() particles:Destroy() end)
+            pcall(function() trail:Destroy() end)
+            pcall(function() attachment:Destroy() end)
+            pcall(function() trailAtt0:Destroy() end)
+        end
+    end)
+    
+    -- Tunggu sampai selesai
+    while not completed do
+        task.wait(0.05)
+    end
+    
+    return true
+end
+
+------------------------------------------------
 -- FARM MODE FUNCTIONS
 ------------------------------------------------
 local function EnableFarmMode()
@@ -400,7 +532,7 @@ local AutoSetConfig = {
     [339] = { Name = "Skeleton Narwhal", Price = 3 },
     [226] = { Name = "Megalodon", Price = 21 },
     [228] = { Name = "Lochness Monster", Price = 51 },
-    [833] = { Name = "Bonemaw Tyrant", Price = 21 },
+    [833] = { Name = "Bonemaw Tyrant", Price = 16 },
     [882] = { Name = "Deepsea Monster Axol", Price = 11 },
     [558] = { Name = "Evolved Enchant Stone", Price = 3 },
     [873] = { Name = "Eggy Enchant Stone", Price = 61 },
@@ -671,12 +803,13 @@ task.spawn(function()
                 clearAllBoothItems()
                 startAutoSelling()
             elseif #boothKosong > 0 then
-                Notify("BOOTH", "Menemukan Booth Kosong, Mendarat...")
+                Notify("BOOTH", "Menemukan Booth Kosong, Terbang...")
                 local targetBooth = boothKosong[1]
                 local posisiMendarat = targetBooth.CF * CFrame.new(0, 0, 4)
                 
-                hrp.CFrame = posisiMendarat
-                task.wait(1.5)
+                -- TERBANG KE BOOTH
+                flyToTarget(posisiMendarat)
+                task.wait(0.5)
                 
                 local prompt = targetBooth.Model:FindFirstChild("ProximityPrompt", true)
                 if prompt and prompt.ActionText == "Claim Booth" then
@@ -699,8 +832,8 @@ task.spawn(function()
                 doServerHop()
             end
         end
-    end) -- MENUTUP pcall(function()
-end) -- MENUTUP task.spawn(function()
+    end)
+end)
 
 ------------------------------------------------
 -- AUTO START FARM MODE
