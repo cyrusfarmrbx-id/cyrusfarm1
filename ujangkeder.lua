@@ -63,6 +63,7 @@ local notifConn = nil
 local fishConn = nil
 local dlConn = nil
 local camConn = nil
+local hideConn = nil
 
 ------------------------------------------------
 -- CLEAR TEXT & PETIR (NOL DELAY)
@@ -178,6 +179,28 @@ local function EnableFarmMode()
 
     notifConn = workspace.DescendantAdded:Connect(clearTextAndLightning)
     if cf then fishConn = cf.DescendantAdded:Connect(clearFish) end
+    
+    -- [HIDE PLAYER] Mulai
+    local chars = workspace:FindFirstChild("Characters")
+    if chars then
+        for _, c in ipairs(chars:GetChildren()) do
+            if c:IsA("Model") and c ~= LocalPlayer.Character then
+                for _, p in ipairs(c:GetDescendants()) do
+                    if p:IsA("BasePart") or p:IsA("MeshPart") then p.Transparency = 1 end
+                end
+            end
+        end
+        hideConn = chars.ChildAdded:Connect(function(c)
+            if c:IsA("Model") and c ~= LocalPlayer.Character then
+                task.wait(0.5)
+                for _, p in ipairs(c:GetDescendants()) do
+                    if p:IsA("BasePart") or p:IsA("MeshPart") then p.Transparency = 1 end
+                end
+            end
+        end)
+    end
+    -- [HIDE PLAYER] Selesai
+
     print("Farm Mode Enabled")
 end
 
@@ -188,6 +211,7 @@ local function DisableFarmMode()
     toggleFPP(false)
     if notifConn then notifConn:Disconnect(); notifConn = nil end
     if fishConn then fishConn:Disconnect(); fishConn = nil end
+    if hideConn then hideConn:Disconnect(); hideConn = nil end -- Tambahkan ini
     print("Farm Mode Disabled")
 end
 
@@ -832,5 +856,40 @@ task.spawn(function()
         for catName, catData in pairs(Categories) do notifyCatch(catData.Webhook, "[TEST WEBHOOK]", 0, false, "[TEST MODE]", "[TEST]") end
         task.wait(2)
         if TrackerEnabled then WH_Status.Text = "Webhook: ON"; WH_Status.TextColor3 = Color3.fromRGB(80,255,80) end
+    end)
+end)
+
+-- OTOMATIS MASUK FARM MODE SETELAH UI SIAP (3 DETIK)
+task.spawn(function()
+    task.wait(3) -- Tunggu 3 detik sampai semua UI 100% selesai dibuat
+    pcall(function()
+        local pg = LocalPlayer:FindFirstChild("PlayerGui")
+        local dl = pg and pg:FindFirstChild("!!! Daily Login")
+        local dlGuiControl = nil
+        pcall(function() dlGuiControl = require(ReplicatedStorage.Modules.GuiControl) end)
+        
+        -- Jalankan Farm Mode
+        EnableFarmMode()
+        
+        -- Handle Daily Login
+        if dl then
+            local function autoClose()
+                if dlGuiControl then
+                    pcall(function() dlGuiControl:Close(true) end)
+                    pcall(function() dlGuiControl:Unlock() end)
+                end
+                dl.Enabled = false
+            end
+            if dl.Enabled then autoClose() end
+            dlConn = dl:GetPropertyChangedSignal("Enabled"):Connect(function()
+                if dl.Enabled then autoClose() end
+            end)
+        end
+
+        -- Pindahin UI dari Menu ke Farm
+        webhookGui.Enabled = false
+        farmGui.Enabled = true
+        
+        ScanRequested = true
     end)
 end)
