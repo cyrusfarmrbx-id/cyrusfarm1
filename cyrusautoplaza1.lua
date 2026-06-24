@@ -650,20 +650,6 @@ task.spawn(function()
         end
     end
 
-    local function isItemNameListed(itemName)
-        local listings = SaleListingsReplion:Get(MyBoothPath)
-        if typeof(listings) ~= "table" then return false end
-        for _, listing in pairs(listings) do
-            if listing and listing.Item then
-                local ok, data = pcall(function() return ItemUtility.GetItemDataFromItemType(listing.ItemType, listing.Item.Id) end)
-                if ok and data and data.Data and data.Data.Name == itemName then
-                    return true
-                end
-            end
-        end
-        return false
-    end
-
     local function clearAllBoothItems()
         local listings = SaleListingsReplion:Get(MyBoothPath)
         if typeof(listings) ~= "table" or next(listings) == nil then return end
@@ -679,51 +665,51 @@ task.spawn(function()
         Notify("SELL", "Scan & Simpan UUID...")
         refreshGlobalCache() 
         
-        -- Bersihkan booth dulu sebelum setup yang baru
         clearAllBoothItems()
         task.wait(0.5)
-        Notify("SELL", "Auto Selling DIMULAI (Max 10 Slot, Auto-Refill)!")
+        Notify("SELL", "Auto Selling DIMULAI (1 ID Maks 10 Slot)!")
         
         for configId, configData in pairs(AutoSetConfig) do
             task.spawn(function()
                 local itemFailCount = 0
-                local MAX_FAIL = 5
-                
+                local MAX_FAIL = 3
                 while AutoSetState.IsRunning do
-                    -- 1. CEK: Apakah ikan ini SUDAH TERPASANG di booth?
-                    local isListed = isItemNameListed(configData.Name)
                     
-                    if isListed then
-                        -- Kalau sudah nempel di booth, aman. Tunggu saja sampai ada yang beli.
+                    -- [PERUBAHAN HANYA DI SINI] Menghitung jumlah item ini yang sudah nempel di booth
+                    local listedCount = 0
+                    local listings = SaleListingsReplion:Get(MyBoothPath)
+                    if typeof(listings) == "table" then
+                        for _, listing in pairs(listings) do
+                            if listing and listing.Item then
+                                local ok, data = pcall(function() return ItemUtility.GetItemDataFromItemType(listing.ItemType, listing.Item.Id) end)
+                                if ok and data and data.Data and data.Data.Name == configData.Name then
+                                    listedCount = listedCount + 1
+                                end
+                            end
+                        end
+                    end
+
+                    -- Jika sudah ada 10 item dengan ID ini di booth, tunggu
+                    if listedCount >= 10 then
                         itemFailCount = 0
-                        task.wait(1) -- Cek setiap 1 detik, hemat resource
-                        
+                        task.wait(0.5)
                     else
-                        -- 2. KOSONG: Ikan ini tidak ada di booth (entah karena belum dipasang, atau LAKU dibeli orang)
+                        -- [[[ MEKANISME UUID ASLI TIDAK DIUBAH DIMULAI DARI SINI ]]]
                         local targetUUIDData = nil
-                        
-                        -- Ambil 1 UUID dari stok gudang (cache)
                         for catType, items in pairs(ItemDatabase) do
                             if items[configData.Name] and #items[configData.Name] > 0 then
                                 targetUUIDData = table.remove(items[configData.Name], 1)
                                 break
                             end
                         end
-                        
                         if targetUUIDData then
-                            -- Ada stok di gudang, langsung pasang ke booth menggantikan yang laku
-                            pcall(function() 
-                                SellRemote:InvokeServer("Booth", targetUUIDData.Category, targetUUIDData.UUID, targetUUIDData.Price) 
-                            end)
                             itemFailCount = 0
-                            task.wait(0.5) -- Jeda sebentar biar server sempat proses
-                            
+                            pcall(function() SellRemote:InvokeServer("Booth", targetUUIDData.Category, targetUUIDData.UUID, targetUUIDData.Price) end)
+                            task.wait(0.3) 
                         else
-                            -- 3. GUDANG KOSONG: Cek ulang inventory real-time (karena mungkin baru saja dapat ikan baru dari auto-farm)
-                            task.wait(1.5)
+                            task.wait(0.5)
                             local inv = Data:Get({ "Inventory" })
                             local foundNew = false
-                            
                             if typeof(inv) == "table" then
                                 for category, items in pairs(inv) do
                                     if typeof(items) == "table" then
@@ -734,8 +720,6 @@ task.spawn(function()
                                                     local t = data.Data.Type
                                                     if not ItemDatabase[t] then ItemDatabase[t] = {} end
                                                     if not ItemDatabase[t][configData.Name] then ItemDatabase[t][configData.Name] = {} end
-                                                    
-                                                    -- Masukkan stok baru ke gudang cache
                                                     table.insert(ItemDatabase[t][configData.Name], {
                                                         UUID = item.UUID,
                                                         Category = t,
@@ -750,17 +734,17 @@ task.spawn(function()
                                     end
                                 end
                             end
-                            
                             if not foundNew then
                                 itemFailCount = itemFailCount + 1
                                 if itemFailCount >= MAX_FAIL then
-                                    Notify("SELL", configData.Name .. " stok benar-benar habis.")
-                                    break -- Hentikan loop untuk ikan ini saja
+                                    Notify("SELL", configData.Name .. " habis.")
+                                    break
                                 end
                             else
                                 itemFailCount = 0
                             end
                         end
+                        -- [[[ MEKANISME UUID ASLI SELESAI DI SINI ]]]
                     end
                 end
             end)
