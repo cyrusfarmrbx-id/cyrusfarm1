@@ -615,34 +615,34 @@ task.spawn(function()
         return 
     end
 
-    local Categories = {
-        RubyGemstone = {
-            Webhook = "https://discord.com/api/webhooks/1504018687735234560/vcDUIkj34d_xnRh_6eNSb8uSGHxDyl2RatpVD0Rvss57rko6nhBvLMsUAhqKwoJzo9Qx",
-            IDs = { [243] = true },
-            RequireMutation = "Gemstone"
-        },
-        Forgotten = {
-            Webhook = "https://discord.com/api/webhooks/1504018896351662090/Y8oLlclVAwMVP2lS0h-8W4kGu3jK5p3XooMQYD41TlST00veiruwlvfVBwVIbql4qeak",
-            IDs = { [773] = true, [822] = true, [870] = true, [210] = true, [907] = true }, [985] = true }
-        },
-        Secret = {
-            Webhook = "https://discord.com/api/webhooks/1504019053193461841/TvwIWf8F9HC93r0t96EyXHOS5bf5kBGtDFOwMk-Hrc6fsNCsLUkHNj-tFNUviC6vPShQ",
-            IDs = { [589] = true, [228] = true, [345] = true, [790] = true, [226] = true }, [977] = true }, [1015] = true }
-        },
-        SecretTumbal = {
-            Webhook = "https://discord.com/api/webhooks/1504019269627674675/5LnchM57p4B1n6AYhI28coZ-e1qZJimg_ISO42ZPTFy2SpyAcTRBay4a3pSKJT_dBoMH",
-            IDs = { 
-                [359] = true, [158] = true, [187] = true, [83] = true, [145] = true,
-                [379] = true, [156] = true, [159] = true, [248] = true, [269] = true, [661] = true, 
-                [450] = true, [833] = true, [141] = true, [201] = true, [218] = true, [225] = true, 
-                [82] = true, [339] = true, [974] = true, [1016] = true
-            }
-        },
-        EnchantStone = {
-            Webhook = "https://discord.com/api/webhooks/1504019386904739840/OW5ZzDqjImAAX7yTsxSK-Ya9U5Ue3nNkAnX11hufPRTg8ZhSBjPENgXHfl5QMIHes4lK",
-            IDs = { [558] = true, [929] = true }
+local Categories = {
+    RubyGemstone = {
+        Webhook = "https://discord.com/api/webhooks/1504018687735234560/vcDUIkj34d_xnRh_6eNSb8uSGHxDyl2RatpVD0Rvss57rko6nhBvLMsUAhqKwoJzo9Qx",
+        IDs = { [243] = true },
+        RequireMutation = "Gemstone"
+    },
+    Forgotten = {
+        Webhook = "https://discord.com/api/webhooks/1504018896351662090/Y8oLlclVAwMVP2lS0h-8W4kGu3jK5p3XooMQYD41TlST00veiruwlvfVBwVIbql4qeak",
+        IDs = { [773] = true, [822] = true, [870] = true, [210] = true, [907] = true, [985] = true } -- Diperbaiki (ditambah '}')
+    },
+    Secret = {
+        Webhook = "https://discord.com/api/webhooks/1504019053193461841/TvwIWf8F9HC93r0t96EyXHOS5bf5kBGtDFOwMk-Hrc6fsNCsLUkHNj-tFNUviC6vPShQ",
+        IDs = { [589] = true, [228] = true, [345] = true, [790] = true, [226] = true, [977] = true, [1015] = true } -- Diperbaiki (ditambah '}')
+    },
+    SecretTumbal = {
+        Webhook = "https://discord.com/api/webhooks/1504019269627674675/5LnchM57p4B1n6AYhI28coZ-e1qZJimg_ISO42ZPTFy2SpyAcTRBay4a3pSKJT_dBoMH",
+        IDs = { 
+            [359] = true, [158] = true, [187] = true, [83] = true, [145] = true,
+            [379] = true, [156] = true, [159] = true, [248] = true, [269] = true, [661] = true, 
+            [450] = true, [833] = true, [141] = true, [201] = true, [218] = true, [225] = true, 
+            [82] = true, [339] = true, [974] = true, [1016] = true
         }
+    },
+    EnchantStone = {
+        Webhook = "https://discord.com/api/webhooks/1504019386904739840/OW5ZzDqjImAAX7yTsxSK-Ya9U5Ue3nNkAnX11hufPRTg8ZhSBjPENgXHfl5QMIHes4lK",
+        IDs = { [558] = true, [929] = true }
     }
+}
 
     local TargetIDs = {
         [243] = "Gemstone", 
