@@ -524,7 +524,7 @@ local BLACKLIST_IDS = {
 }
 
 local AutoSetConfig = {
-    [228] = { Name = "Lochness Monster", Price = 51 },
+    [228] = { Name = "Lochness Monster", Price = 41 },
 }
 
 -- ================= LOAD LIBRARY & SYSTEM =================
