@@ -534,7 +534,7 @@ local AutoSetConfig = {
     [661] = { Name = "Elpirate Gran Maja", Price = 31 },
     [226] = { Name = "Megalodon", Price = 21 },
     [228] = { Name = "Lochness Monster", Price = 41 },
-    [833] = { Name = "Bonemaw Tyrant", Price = 16 },
+    [833] = { Name = "Bonemaw Tyrant", Price = 11 },
     [882] = { Name = "Deepsea Monster Axol", Price = 11 },
     [558] = { Name = "Evolved Enchant Stone", Price = 2 },
     [873] = { Name = "Eggy Enchant Stone", Price = 61 },
