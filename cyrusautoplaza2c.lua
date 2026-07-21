@@ -536,10 +536,10 @@ local AutoSetConfig = {
     [228] = { Name = "Lochness Monster", Price = 41 },
     [833] = { Name = "Bonemaw Tyrant", Price = 11 },
     [882] = { Name = "Deepsea Monster Axol", Price = 11 },
-    [864] = { Name = "Strawberry Orca", Price = 51 },
+    [864] = { Name = "Strawberry Orca", Price = 71 },
     [927] = { Name = "Aurelion", Price = 51 },
     [558] = { Name = "Evolved Enchant Stone", Price = 2 },
-    [873] = { Name = "Eggy Enchant Stone", Price = 51 },
+    [873] = { Name = "Eggy Enchant Stone", Price = 61 },
     [929] = { Name = "Runic Enchant Stone", Price = 51 },
 }
 
