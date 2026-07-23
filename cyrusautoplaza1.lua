@@ -10,7 +10,7 @@ if not UserPriority:IsTradePlaza() then
     local character = player.Character or player.CharacterAdded:Wait()
     local rootPart = character:WaitForChild("HumanoidRootPart")
     rootPart.CFrame = CFrame.new(-39, 10, 2805)
-    task.wait(0.5)
+    task.wait(1)
     for _, obj in ipairs(workspace:GetDescendants()) do
         if obj:IsA("ProximityPrompt") then
             local textCheck = (obj.Name .. " " .. obj.ActionText):lower()
@@ -444,11 +444,11 @@ local AutoSetConfig = {
     [359] = { Name = "Gladiator Shark", Price = 2 },
     [339] = { Name = "Skeleton Narwhal", Price = 2 },
     [269] = { Name = "Elshark Gran Maja", Price = 6 },
-    [145] = { Name = "Worm Fish", Price = 6 },
+    [145] = { Name = "Worm Fish", Price = 5 },
     [661] = { Name = "Elpirate Gran Maja", Price = 21 },
     [226] = { Name = "Megalodon", Price = 506 },
     [228] = { Name = "Lochness Monster", Price = 41 },
-    [833] = { Name = "Bonemaw Tyrant", Price = 11 },
+    [833] = { Name = "Bonemaw Tyrant", Price = 8 },
     [882] = { Name = "Deepsea Monster Axol", Price = 11 },
     [864] = { Name = "Strawberry Orca", Price = 53 },
     [927] = { Name = "Aurelion", Price = 52 },
@@ -522,7 +522,7 @@ task.spawn(function()
                 count = tonumber(data.Players) or 0
             end
             
-            if count <= 5 then
+            if count <= 7 then
                 table.insert(EligibleServers, jobId)
             end
         end
@@ -745,7 +745,7 @@ task.spawn(function()
                 
                 -- TELEPORT KE BOOTH
                 teleportToTarget(posisiMendarat)
-                task.wait(0.3)
+                task.wait(1)
                 
                 local prompt = targetBooth.Model:FindFirstChild("ProximityPrompt", true)
                 if prompt and prompt.ActionText == "Claim Booth" then
