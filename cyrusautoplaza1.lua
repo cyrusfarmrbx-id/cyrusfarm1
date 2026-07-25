@@ -10,7 +10,7 @@ if not UserPriority:IsTradePlaza() then
     local character = player.Character or player.CharacterAdded:Wait()
     local rootPart = character:WaitForChild("HumanoidRootPart")
     rootPart.CFrame = CFrame.new(-39, 10, 2805)
-    task.wait(1)
+    task.wait(0.5)
     for _, obj in ipairs(workspace:GetDescendants()) do
         if obj:IsA("ProximityPrompt") then
             local textCheck = (obj.Name .. " " .. obj.ActionText):lower()
