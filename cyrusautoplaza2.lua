@@ -1,4 +1,31 @@
 ------------------------------------------------
+-- CHECKPOINT TRADE PLAZA
+------------------------------------------------
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserPriority = require(ReplicatedStorage.Shared.UserPriority)
+
+if not UserPriority:IsTradePlaza() then
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local rootPart = character:WaitForChild("HumanoidRootPart")
+    rootPart.CFrame = CFrame.new(-39, 10, 2805)
+    task.wait(0.5)
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("ProximityPrompt") then
+            local textCheck = (obj.Name .. " " .. obj.ActionText):lower()
+            if textCheck:find("teleporter") or textCheck:find("go to plaza") or textCheck:find("plaza") then
+                obj:InputHoldBegin()
+                task.wait(0.2)
+                obj:InputHoldEnd()
+                break
+            end
+        end
+    end
+    return
+end
+
+------------------------------------------------
 -- SERVICES
 ------------------------------------------------
 local Players = game:GetService("Players")
@@ -302,134 +329,20 @@ FloatStroke.Transparency = 0.1
 Instance.new("UICorner", FloatBtn).CornerRadius = UDim.new(1, 0)
 
 ------------------------------------------------
--- FLY TO TARGET SYSTEM
+-- TELEPORT TO TARGET SYSTEM
 ------------------------------------------------
-local FLY_CONFIG = {
-    SPEED = 50,
-    HEIGHT_OFFSET = 10,
-    BOB_SPEED = 8,
-    BOB_AMOUNT = 0.15,
-    TILT_AMOUNT = 0.03
-}
+local function teleportToTarget(TargetCF)
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    if not character then
+        return false
+    end
 
-local function flyToTarget(TargetCF)
-    local character = LocalPlayer.Character
-    if not character then return false end
-    local HRP = character:FindFirstChild("HumanoidRootPart")
-    local Humanoid = character:FindFirstChild("Humanoid")
-    if not HRP or not Humanoid then return false end
-    
-    local startPos = HRP.CFrame
-    local targetPos = TargetCF + Vector3.new(0, FLY_CONFIG.HEIGHT_OFFSET, 0)
-    
-    local direction = (targetPos.Position - startPos.Position)
-    local totalDistance = direction.Magnitude
-    if totalDistance < 1 then
-        HRP.CFrame = TargetCF
-        return true
+    local hrp = character:WaitForChild("HumanoidRootPart", 5)
+    if not hrp then
+        return false
     end
-    direction = direction.Unit
-    
-    local originalWalkSpeed = Humanoid.WalkSpeed
-    Humanoid.WalkSpeed = 0
-    
-    -- Efek Partikel
-    local attachment = Instance.new("Attachment")
-    attachment.Parent = HRP
-    
-    local particles = Instance.new("ParticleEmitter")
-    particles.Color = ColorSequence.new(Color3.fromRGB(150, 200, 255), Color3.fromRGB(100, 150, 255))
-    particles.Size = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.5),
-        NumberSequenceKeypoint.new(0.5, 1),
-        NumberSequenceKeypoint.new(1, 0)
-    })
-    particles.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.8),
-        NumberSequenceKeypoint.new(0.5, 0.3),
-        NumberSequenceKeypoint.new(1, 1)
-    })
-    particles.Lifetime = NumberRange.new(0.3, 0.6)
-    particles.Rate = 30
-    particles.Speed = NumberRange.new(2, 5)
-    particles.SpreadAngle = Vector2.new(30, 30)
-    particles.Acceleration = Vector3.new(0, -5, 0)
-    particles.LightEmission = 0.5
-    particles.Parent = attachment
-    
-    -- Trail Effect
-    local trail = Instance.new("Trail")
-    trail.Attachment0 = attachment
-    local trailAtt0 = Instance.new("Attachment")
-    trailAtt0.Position = Vector3.new(0, 0, -1)
-    trailAtt0.Parent = HRP
-    trail.Attachment1 = trailAtt0
-    trail.Lifetime = 0.3
-    trail.MinLength = 0.1
-    trail.FaceCamera = true
-    trail.LightEmission = 0.5
-    trail.LightInfluence = 0
-    trail.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0),
-        NumberSequenceKeypoint.new(1, 1)
-    })
-    trail.Color = ColorSequence.new(Color3.fromRGB(100, 180, 255))
-    trail.WidthScale = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 1),
-        NumberSequenceKeypoint.new(1, 0)
-    })
-    trail.Parent = HRP
-    
-    local startTime = tick()
-    local completed = false
-    
-    local connection
-    connection = RunService.Heartbeat:Connect(function(dt)
-        local elapsed = tick() - startTime
-        local progress = math.min((elapsed * FLY_CONFIG.SPEED) / totalDistance, 1)
-        
-        -- Efek blob/bobbing naik turun
-        local currentPos = startPos.Position:Lerp(targetPos.Position, progress)
-        local bobOffset = math.sin(elapsed * FLY_CONFIG.BOB_SPEED) * FLY_CONFIG.BOB_AMOUNT
-        currentPos = currentPos + Vector3.new(0, bobOffset, 0)
-        
-        -- Rotasi menghadap target + sedikit miring
-        local lookCFrame = CFrame.lookAt(currentPos, currentPos + direction)
-        local tiltAngle = math.sin(elapsed * FLY_CONFIG.BOB_SPEED * 2) * FLY_CONFIG.TILT_AMOUNT
-        local tiltCFrame = CFrame.Angles(tiltAngle, 0, tiltAngle * 0.5)
-        
-        local finalCFrame = lookCFrame * tiltCFrame
-        
-        -- Terapkan posisi
-        HRP.CFrame = finalCFrame
-        
-        if Humanoid then
-            Humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
-        end
-        
-        -- Selesai
-        if progress >= 1 then
-            connection:Disconnect()
-            completed = true
-            
-            HRP.CFrame = TargetCF
-            
-            Humanoid.WalkSpeed = originalWalkSpeed
-            Humanoid:ChangeState(Enum.HumanoidStateType.Landed)
-            
-            -- Hapus efek
-            pcall(function() particles:Destroy() end)
-            pcall(function() trail:Destroy() end)
-            pcall(function() attachment:Destroy() end)
-            pcall(function() trailAtt0:Destroy() end)
-        end
-    end)
-    
-    -- Tunggu sampai selesai
-    while not completed do
-        task.wait(0.05)
-    end
-    
+
+    character:PivotTo(TargetCF)
     return true
 end
 
@@ -531,10 +444,15 @@ local AutoSetConfig = {
     [359] = { Name = "Gladiator Shark", Price = 2 },
     [339] = { Name = "Skeleton Narwhal", Price = 2 },
     [269] = { Name = "Elshark Gran Maja", Price = 6 },
-    [226] = { Name = "Megalodon", Price = 21 },
+    [145] = { Name = "Worm Fish", Price = 5 },
+    [661] = { Name = "Elpirate Gran Maja", Price = 16 },
+    [226] = { Name = "Megalodon", Price = 506 },
     [228] = { Name = "Lochness Monster", Price = 41 },
-    [833] = { Name = "Bonemaw Tyrant", Price = 16 },
+    [833] = { Name = "Bonemaw Tyrant", Price = 8 },
     [882] = { Name = "Deepsea Monster Axol", Price = 11 },
+    [864] = { Name = "Strawberry Orca", Price = 62 },
+    [927] = { Name = "Aurelion", Price = 52 },
+    [589] = { Name = "Cursed Kraken", Price = 51 },
     [558] = { Name = "Evolved Enchant Stone", Price = 2 },
     [873] = { Name = "Eggy Enchant Stone", Price = 61 },
     [929] = { Name = "Runic Enchant Stone", Price = 51 },
@@ -583,7 +501,7 @@ task.spawn(function()
     Notify("SYSTEM", "Data Siap. Memulai Seller...")
     
     local function doServerHop()
-        Notify("HOP", "Mencari server sepi...")
+        Notify("HOP", "Mencari server sepi (Max 5 pemain)...")
         local startTick = tick()
         repeat task.wait(0.5) until (ServerBrowserData.Data.Servers and next(ServerBrowserData.Data.Servers) ~= nil) or (tick() - startTick > 10)
         
@@ -594,41 +512,38 @@ task.spawn(function()
         end
         
         local servers = ServerBrowserData.Data.Servers
-        local targetJobId, lowestPlayerCount = nil, math.huge
+        local EligibleServers = {}
         
         for jobId, data in pairs(servers) do
             if jobId == game.JobId then continue end
             
-            -- FIX: Data Players langsung berupa Number, bukan Table
             local count = 0
             if typeof(data) == "table" then
                 count = tonumber(data.Players) or 0
             end
             
-            if count < lowestPlayerCount then
-                lowestPlayerCount = count
-                targetJobId = jobId
+            if count <= 7 then
+                table.insert(EligibleServers, jobId)
             end
         end
         
-        if targetJobId then
-            Notify("HOP", "Pindah ke server dengan "..lowestPlayerCount.." pemain.")
+        if #EligibleServers > 0 then
+            local targetJobId = EligibleServers[math.random(1, #EligibleServers)]
+            Notify("HOP", "Pindah ke server random sepi.")
             task.wait(2)
             pcall(function()
-                -- FIX: Cek apakah fitur ServerBrowser diizinkan oleh RemoteConfigs
                 local isServerHopEnabled = false
                 pcall(function() isServerHopEnabled = RemoteConfigs:Get("ServerBrowser") end)
                 
                 if isServerHopEnabled == true then
                     Net:RemoteEvent("ServerHop"):FireServer(targetJobId)
                 else
-                    -- Fallback jika fitur dinonaktifkan dev
                     TeleportService:TeleportToPlaceInstance(game.PlaceId, targetJobId)
                 end
             end)
             return true
         else
-            Notify("HOP", "Tidak ada server lain yang ditemukan.")
+            Notify("HOP", "Tidak ada server dengan <= 5 pemain.")
         end
         
         return false
@@ -824,13 +739,13 @@ task.spawn(function()
                 clearAllBoothItems()
                 startAutoSelling()
             elseif #boothKosong > 0 then
-                Notify("BOOTH", "Menemukan Booth Kosong, Terbang...")
+                Notify("BOOTH", "Menemukan Booth Kosong, Teleport...")
                 local targetBooth = boothKosong[1]
                 local posisiMendarat = targetBooth.CF * CFrame.new(0, 0, 4)
                 
-                -- TERBANG KE BOOTH
-                flyToTarget(posisiMendarat)
-                task.wait(0.5)
+                -- TELEPORT KE BOOTH
+                teleportToTarget(posisiMendarat)
+                task.wait(1)
                 
                 local prompt = targetBooth.Model:FindFirstChild("ProximityPrompt", true)
                 if prompt and prompt.ActionText == "Claim Booth" then
