@@ -447,7 +447,7 @@ local AutoSetConfig = {
     [145] = { Name = "Worm Fish", Price = 5 },
     [661] = { Name = "Elpirate Gran Maja", Price = 16 },
     [226] = { Name = "Megalodon", Price = 455 },
-    [228] = { Name = "Lochness Monster", Price = 36 },
+    [228] = { Name = "Lochness Monster", Price = 41 },
     [833] = { Name = "Bonemaw Tyrant", Price = 6 },
     [882] = { Name = "Deepsea Monster Axol", Price = 11 },
     [864] = { Name = "Strawberry Orca", Price = 52 },
