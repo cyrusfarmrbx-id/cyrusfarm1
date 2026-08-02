@@ -1,4 +1,31 @@
 ------------------------------------------------
+-- CHECKPOINT TRADE PLAZA
+------------------------------------------------
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserPriority = require(ReplicatedStorage.Shared.UserPriority)
+
+if not UserPriority:IsTradePlaza() then
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local rootPart = character:WaitForChild("HumanoidRootPart")
+    rootPart.CFrame = CFrame.new(-39, 10, 2805)
+    task.wait(0.5)
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("ProximityPrompt") then
+            local textCheck = (obj.Name .. " " .. obj.ActionText):lower()
+            if textCheck:find("teleporter") or textCheck:find("go to plaza") or textCheck:find("plaza") then
+                obj:InputHoldBegin()
+                task.wait(0.2)
+                obj:InputHoldEnd()
+                break
+            end
+        end
+    end
+    return
+end
+
+------------------------------------------------
 -- SERVICES
 ------------------------------------------------
 local Players = game:GetService("Players")
@@ -399,10 +426,10 @@ end)
 -- AUTO SELLER CONFIG & SYSTEM
 ------------------------------------------------
 local BoothCFs = {
-    CFrame.new(-1015.32189941406250, 18.56108856201172, 3051.73754882812500, -0.49987316131592, 0.00000000000000, 0.86609864234924, 0.00000000000000, 1.00000000000000, 0.00000000000000, -0.86609864234924, 0.00000000000000, -0.49987316131592),
-    CFrame.new(-1009.32385253906250, 18.56108856201172, 3062.13085937500000, -0.49987316131592, 0.00000000000000, 0.86609864234924, 0.00000000000000, 1.00000000000000, 0.00000000000000, -0.86609864234924, 0.00000000000000, -0.49987316131592),
-    CFrame.new(-1003.32580566406250, 18.56108856201172, 3072.52441406250000, -0.49987316131592, 0.00000000000000, 0.86609864234924, 0.00000000000000, 1.00000000000000, 0.00000000000000, -0.86609864234924, 0.00000000000000, -0.49987316131592),
-    CFrame.new(-997.32769775390625, 18.56108856201172, 3082.91796875000000, -0.49987316131592, 0.00000000000000, 0.86609864234924, 0.00000000000000, 1.00000000000000, 0.00000000000000, -0.86609864234924, 0.00000000000000, -0.49987316131592)
+    CFrame.new(-21.4687653, 663.219971, 400.375702, -0.499873161, 0, 0.866098642, 0, 1, 0, -0.866098642, 0, -0.499873161),
+    CFrame.new(-15.4706612, 663.219971, 410.769012, -0.499873161, 0, 0.866098642, 0, 1, 0, -0.866098642, 0, -0.499873161),
+    CFrame.new(-9.47267914, 663.219971, 421.162567, -0.499873161, 0, 0.866098642, 0, 1, 0, -0.866098642, 0, -0.499873161),
+    CFrame.new(-3.47454643, 663.219971, 431.556122, -0.499873161, 0, 0.866098642, 0, 1, 0, -0.866098642, 0, -0.499873161)
 }
 
 local BLACKLIST_IDS = {
