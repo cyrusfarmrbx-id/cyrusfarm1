@@ -450,7 +450,7 @@ local AutoSetConfig = {
     [228] = { Name = "Lochness Monster", Price = 51 },
     [833] = { Name = "Bonemaw Tyrant", Price = 3 },
     [882] = { Name = "Deepsea Monster Axol", Price = 11 },
-    [864] = { Name = "Strawberry Orca", Price = 42 },
+    [864] = { Name = "Strawberry Orca", Price = 41 },
     [927] = { Name = "Aurelion", Price = 31 },
     [589] = { Name = "Cursed Kraken", Price = 51 },
     [558] = { Name = "Evolved Enchant Stone", Price = 2 },
@@ -501,7 +501,7 @@ task.spawn(function()
     Notify("SYSTEM", "Data Siap. Memulai Seller...")
     
     local function doServerHop()
-        Notify("HOP", "Mencari server sepi (Max 5 pemain)...")
+        Notify("HOP", "Mencari server sepi (Max 10 pemain)...")
         local startTick = tick()
         repeat task.wait(0.5) until (ServerBrowserData.Data.Servers and next(ServerBrowserData.Data.Servers) ~= nil) or (tick() - startTick > 10)
         
@@ -522,7 +522,7 @@ task.spawn(function()
                 count = tonumber(data.Players) or 0
             end
             
-            if count <= 7 then
+            if count <= 10 then
                 table.insert(EligibleServers, jobId)
             end
         end
