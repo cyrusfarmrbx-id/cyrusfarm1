@@ -1,4 +1,31 @@
 ------------------------------------------------
+-- CHECKPOINT TRADE PLAZA
+------------------------------------------------
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserPriority = require(ReplicatedStorage.Shared.UserPriority)
+
+if not UserPriority:IsTradePlaza() then
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local rootPart = character:WaitForChild("HumanoidRootPart")
+    rootPart.CFrame = CFrame.new(-39, 10, 2805)
+    task.wait(0.5)
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("ProximityPrompt") then
+            local textCheck = (obj.Name .. " " .. obj.ActionText):lower()
+            if textCheck:find("teleporter") or textCheck:find("go to plaza") or textCheck:find("plaza") then
+                obj:InputHoldBegin()
+                task.wait(0.2)
+                obj:InputHoldEnd()
+                break
+            end
+        end
+    end
+    return
+end
+
+------------------------------------------------
 -- SERVICES
 ------------------------------------------------
 local Players = game:GetService("Players")
@@ -302,6 +329,24 @@ FloatStroke.Transparency = 0.1
 Instance.new("UICorner", FloatBtn).CornerRadius = UDim.new(1, 0)
 
 ------------------------------------------------
+-- TELEPORT TO TARGET SYSTEM
+------------------------------------------------
+local function teleportToTarget(TargetCF)
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    if not character then
+        return false
+    end
+
+    local hrp = character:WaitForChild("HumanoidRootPart", 5)
+    if not hrp then
+        return false
+    end
+
+    character:PivotTo(TargetCF)
+    return true
+end
+
+------------------------------------------------
 -- FARM MODE FUNCTIONS
 ------------------------------------------------
 local function EnableFarmMode()
@@ -381,29 +426,35 @@ end)
 -- AUTO SELLER CONFIG & SYSTEM
 ------------------------------------------------
 local BoothCFs = {
-    CFrame.new(-1015.32189941406250, 18.56108856201172, 3051.73754882812500, -0.49987316131592, 0.00000000000000, 0.86609864234924, 0.00000000000000, 1.00000000000000, 0.00000000000000, -0.86609864234924, 0.00000000000000, -0.49987316131592),
-    CFrame.new(-1009.32385253906250, 18.56108856201172, 3062.13085937500000, -0.49987316131592, 0.00000000000000, 0.86609864234924, 0.00000000000000, 1.00000000000000, 0.00000000000000, -0.86609864234924, 0.00000000000000, -0.49987316131592),
-    CFrame.new(-1003.32580566406250, 18.56108856201172, 3072.52441406250000, -0.49987316131592, 0.00000000000000, 0.86609864234924, 0.00000000000000, 1.00000000000000, 0.00000000000000, -0.86609864234924, 0.00000000000000, -0.49987316131592),
-    CFrame.new(-997.32769775390625, 18.56108856201172, 3082.91796875000000, -0.49987316131592, 0.00000000000000, 0.86609864234924, 0.00000000000000, 1.00000000000000, 0.00000000000000, -0.86609864234924, 0.00000000000000, -0.49987316131592)
+    CFrame.new(-21.4687653, 663.219971, 400.375702, -0.499873161, 0, 0.866098642, 0, 1, 0, -0.866098642, 0, -0.499873161),
+    CFrame.new(-15.4706612, 663.219971, 410.769012, -0.499873161, 0, 0.866098642, 0, 1, 0, -0.866098642, 0, -0.499873161),
+    CFrame.new(-9.47267914, 663.219971, 421.162567, -0.499873161, 0, 0.866098642, 0, 1, 0, -0.866098642, 0, -0.499873161),
+    CFrame.new(-3.47454643, 663.219971, 431.556122, -0.499873161, 0, 0.866098642, 0, 1, 0, -0.866098642, 0, -0.499873161)
 }
 
 local BLACKLIST_IDS = {
-    10849334132, 10757298410, 10762189210, 10757278851, 10762153032, 11098889630, 9684028951, 9709193019
+    10849334132, 10757298410, 10762189210, 10757278851, 10762153032, 11098889630, 9684028951, 9709193019, 9709047584, 9709050799, 9709105383, 9709099089, 9709062371, 9709069006
 }
 
 local AutoSetConfig = {
-    [158] = { Name = "King Crab", Price = 3 },
-    [187] = { Name = "Queen Crab", Price = 3 },
-    [82]  = { Name = "Blob Shark", Price = 3 },
-    [83]  = { Name = "Ghost Shark", Price = 3 },
-    [359] = { Name = "Gladiator Shark", Price = 3 },
-    [339] = { Name = "Skeleton Narwhal", Price = 3 },
-    [226] = { Name = "Megalodon", Price = 810 },
-    [228] = { Name = "Lochness Monster", Price = 61 },
-    [833] = { Name = "Bonemaw Tyrant", Price = 21 },
+    [158] = { Name = "King Crab", Price = 2 },
+    [187] = { Name = "Queen Crab", Price = 2 },
+    [82]  = { Name = "Blob Shark", Price = 2 },
+    [83]  = { Name = "Ghost Shark", Price = 2 },
+    [359] = { Name = "Gladiator Shark", Price = 2 },
+    [339] = { Name = "Skeleton Narwhal", Price = 2 },
+    [269] = { Name = "Elshark Gran Maja", Price = 6 },
+    [145] = { Name = "Worm Fish", Price = 4 },
+    [661] = { Name = "Elpirate Gran Maja", Price = 16 },
+    [226] = { Name = "Megalodon", Price = 304 },
+    [228] = { Name = "Lochness Monster", Price = 51 },
+    [833] = { Name = "Bonemaw Tyrant", Price = 3 },
     [882] = { Name = "Deepsea Monster Axol", Price = 11 },
-    [558] = { Name = "Evolved Enchant Stone", Price = 3 },
-    [873] = { Name = "Eggy Enchant Stone", Price = 61 },
+    [864] = { Name = "Strawberry Orca", Price = 41 },
+    [927] = { Name = "Aurelion", Price = 31 },
+    [589] = { Name = "Cursed Kraken", Price = 51 },
+    [558] = { Name = "Evolved Enchant Stone", Price = 2 },
+    [873] = { Name = "Eggy Enchant Stone", Price = 51 },
     [929] = { Name = "Runic Enchant Stone", Price = 51 },
 }
 
@@ -450,34 +501,51 @@ task.spawn(function()
     Notify("SYSTEM", "Data Siap. Memulai Seller...")
     
     local function doServerHop()
-        Notify("HOP", "Mencari server sepi...")
+        Notify("HOP", "Mencari server sepi (Max 10 pemain)...")
         local startTick = tick()
         repeat task.wait(0.5) until (ServerBrowserData.Data.Servers and next(ServerBrowserData.Data.Servers) ~= nil) or (tick() - startTick > 10)
-        if not ServerBrowserData.Data.Servers then return false end
+        
+        if not ServerBrowserData.Data.Servers then 
+            Notify("HOP", "Gagal load daftar server, coba fallback...")
+            pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId) end)
+            return false 
+        end
+        
         local servers = ServerBrowserData.Data.Servers
-        local targetJobId, lowestPlayerCount = nil, math.huge
+        local EligibleServers = {}
+        
         for jobId, data in pairs(servers) do
             if jobId == game.JobId then continue end
-            if type(data) == "table" and data.Players then
-                local count = #data.Players
-                if count > 0 and count <= 10 and count < lowestPlayerCount then
-                    lowestPlayerCount = count
-                    targetJobId = jobId
-                end
+            
+            local count = 0
+            if typeof(data) == "table" then
+                count = tonumber(data.Players) or 0
+            end
+            
+            if count <= 10 then
+                table.insert(EligibleServers, jobId)
             end
         end
-        if targetJobId then
-            Notify("HOP", "Pindah: "..lowestPlayerCount.." Pemain.")
-            task.wait(3)
+        
+        if #EligibleServers > 0 then
+            local targetJobId = EligibleServers[math.random(1, #EligibleServers)]
+            Notify("HOP", "Pindah ke server random sepi.")
+            task.wait(2)
             pcall(function()
-                if RemoteConfigs:Get("ServerBrowser") == true then
+                local isServerHopEnabled = false
+                pcall(function() isServerHopEnabled = RemoteConfigs:Get("ServerBrowser") end)
+                
+                if isServerHopEnabled == true then
                     Net:RemoteEvent("ServerHop"):FireServer(targetJobId)
                 else
                     TeleportService:TeleportToPlaceInstance(game.PlaceId, targetJobId)
                 end
             end)
             return true
+        else
+            Notify("HOP", "Tidak ada server dengan <= 5 pemain.")
         end
+        
         return false
     end
 
@@ -671,12 +739,13 @@ task.spawn(function()
                 clearAllBoothItems()
                 startAutoSelling()
             elseif #boothKosong > 0 then
-                Notify("BOOTH", "Menemukan Booth Kosong, Mendarat...")
+                Notify("BOOTH", "Menemukan Booth Kosong, Teleport...")
                 local targetBooth = boothKosong[1]
                 local posisiMendarat = targetBooth.CF * CFrame.new(0, 0, 4)
                 
-                hrp.CFrame = posisiMendarat
-                task.wait(1.5)
+                -- TELEPORT KE BOOTH
+                teleportToTarget(posisiMendarat)
+                task.wait(1)
                 
                 local prompt = targetBooth.Model:FindFirstChild("ProximityPrompt", true)
                 if prompt and prompt.ActionText == "Claim Booth" then
@@ -699,8 +768,8 @@ task.spawn(function()
                 doServerHop()
             end
         end
-    end) -- MENUTUP pcall(function()
-end) -- MENUTUP task.spawn(function()
+    end)
+end)
 
 ------------------------------------------------
 -- AUTO START FARM MODE
