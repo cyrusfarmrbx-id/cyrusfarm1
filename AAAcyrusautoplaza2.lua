@@ -458,6 +458,8 @@ local AutoSetConfig = {
     [864] = { Name = "Strawberry Orca", Price = 41 },
     [927] = { Name = "Aurelion", Price = 31 },
     [589] = { Name = "Cursed Kraken", Price = 51 },
+    [5] = { Name = "Winged Halo", Price = 51 },
+    [4] = { Name = "Bunny Halo", Price = 26 },
     [558] = { Name = "Evolved Enchant Stone", Price = 2 },
     [873] = { Name = "Eggy Enchant Stone", Price = 51 },
     [929] = { Name = "Runic Enchant Stone", Price = 51 },
