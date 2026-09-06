@@ -441,13 +441,6 @@ local BLACKLIST_IDS = {
 }
 
 local AutoSetConfig = {
-    [158] = { Name = "King Crab", Price = 2 },
-    [187] = { Name = "Queen Crab", Price = 2 },
-    [82]  = { Name = "Blob Shark", Price = 2 },
-    [83]  = { Name = "Ghost Shark", Price = 2 },
-    [359] = { Name = "Gladiator Shark", Price = 2 },
-    [339] = { Name = "Skeleton Narwhal", Price = 2 },
-    [269] = { Name = "Elshark Gran Maja", Price = 6 },
     [145] = { Name = "Worm Fish", Price = 4 },
     [661] = { Name = "Elpirate Gran Maja", Price = 16 },
     [243] = { Name = "Ruby", Price = 91 },
