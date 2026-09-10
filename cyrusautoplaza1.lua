@@ -441,16 +441,16 @@ local BLACKLIST_IDS = {
 }
 
 local AutoSetConfig = {
-    [158] = { Name = "King Crab", Price = 16 },
-    [187] = { Name = "Queen Crab", Price = 16 },
-    [82]  = { Name = "Blob Shark", Price = 16 },
-    [83]  = { Name = "Ghost Shark", Price = 16 },
-    [359] = { Name = "Gladiator Shark", Price = 16 },
-    [339] = { Name = "Skeleton Narwhal", Price = 16 },
+    [158] = { Name = "King Crab", Price = 11 },
+    [187] = { Name = "Queen Crab", Price = 11 },
+    [82]  = { Name = "Blob Shark", Price = 11 },
+    [83]  = { Name = "Ghost Shark", Price = 11 },
+    [359] = { Name = "Gladiator Shark", Price = 11 },
+    [339] = { Name = "Skeleton Narwhal", Price = 11 },
     [269] = { Name = "Elshark Gran Maja", Price = 6 },
     [145] = { Name = "Worm Fish", Price = 4 },
     [661] = { Name = "Elpirate Gran Maja", Price = 16 },
-    [226] = { Name = "Megalodon", Price = 8 },
+    [226] = { Name = "Megalodon", Price = 7 },
     [228] = { Name = "Lochness Monster", Price = 46 },
     [833] = { Name = "Bonemaw Tyrant", Price = 3 },
     [882] = { Name = "Deepsea Monster Axol", Price = 11 },
