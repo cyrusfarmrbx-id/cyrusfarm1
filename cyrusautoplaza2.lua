@@ -437,14 +437,15 @@ local BoothCFs = {
 }
 
 local BLACKLIST_IDS = {
-    10849334132, 10757298410, 10762189210, 10757278851, 10762153032, 11098889630, 9684028951, 9709193019, 9709047584, 9709050799, 9709105383, 9709099089, 9709062371, 9709069006
+    10849334132, 10757298410, 10762189210, 10757278851, 10762153032, 11098889630, 9684028951, 9709193019, 9709047584, 9709050799, 9709105383, 9709099089, 9709062371, 9709069006, 11680430904, 11680421692, 11680428009, 11680418737
 }
 
 local AutoSetConfig = {
+    [82]  = { Name = "Blob Shark", Price = 2 },
     [145] = { Name = "Worm Fish", Price = 4 },
     [661] = { Name = "Elpirate Gran Maja", Price = 16 },
-    [243] = { Name = "Ruby", Price = 81 },
-    [226] = { Name = "Megalodon", Price = 223 },
+    [243] = { Name = "Ruby", Price = 76 },
+    [226] = { Name = "Megalodon", Price = 233 },
     [228] = { Name = "Lochness Monster", Price = 102 },
     [833] = { Name = "Bonemaw Tyrant", Price = 3 },
     [882] = { Name = "Deepsea Monster Axol", Price = 11 },
