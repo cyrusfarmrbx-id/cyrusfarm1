@@ -441,6 +441,7 @@ local BLACKLIST_IDS = {
 }
 
 local AutoSetConfig = {
+    [83]  = { Name = "Ghost Shark", Price = 2 },
     [82]  = { Name = "Blob Shark", Price = 2 },
     [145] = { Name = "Worm Fish", Price = 4 },
     [661] = { Name = "Elpirate Gran Maja", Price = 16 },
